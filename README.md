@@ -1,5 +1,5 @@
 # Fork of Hintikkasworld
-The Original repository is located [Here](https://gitlab.inria.fr/fschwarz/hintikkasworld). This repository adds an Aces & Eights example.
+The Original repository is located [Here](https://gitlab.inria.fr/fschwarz/hintikkasworld). This repository adds an Aces & Eights example. The original repository seems to be missing two files: assets/bdds/minesweeper_8_8_10.json and assets/bdds/minesweeper_12_15_20.json. The references to these files have been removed since the project will not start without these files. As a result, the minesweeper models may not work correctly.
 
 # The README from the original repository is as follows:
 
