@@ -1,4 +1,7 @@
-# Hintikkasworld
+# Fork of Hintikkasworld
+The Original repository is located [Here](https://gitlab.inria.fr/fschwarz/hintikkasworld). This repository adds an Aces & Eights example.
+
+# The README from the original repository is as follows:
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.3.1.
 
