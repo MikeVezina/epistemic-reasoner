@@ -3,17 +3,24 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
+    "start": "node server.js",
+    "heroku-postbuild": "ng build --prod",
     "e2e": "ng e2e"
+  },
+  "engines": {
+    "node": "12.4.0",
+    "npm": "6.13.2"
   },
   "private": true,
   "dependencies": {
     "@angular/animations": "~8.0.3",
     "@angular/common": "~8.0.3",
     "@angular/compiler": "~8.0.3",
+    "@angular/cli": "^8.0.4",
+    "@angular/compiler-cli": "^8.0.3",
     "@angular/core": "~8.0.3",
     "@angular/forms": "~8.0.3",
     "@angular/platform-browser": "~8.0.3",
@@ -25,10 +32,12 @@
     "crypto": "^1.0.1",
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
+    "typescript": "~3.4.5",
     "path": "^0.12.7",
     "rxjs": "~6.5.2",
     "tslib": "^1.10.0",
-    "zone.js": "~0.9.1"
+    "zone.js": "~0.9.1",
+    "express": "latest"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^0.800.6",
