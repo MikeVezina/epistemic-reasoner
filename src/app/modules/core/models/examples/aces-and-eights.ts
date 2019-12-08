@@ -87,7 +87,7 @@ export class AcesAndEights extends ExampleDescription {
     }
 
     getInitialEpistemicModel() {
-        const permutator = (inputArr) => {
+        const create_combinations = (inputArr) => {
 
             let result = [];
 
@@ -104,10 +104,11 @@ export class AcesAndEights extends ExampleDescription {
         };
 
         let M = new ExplicitEpistemicModel();
-        let permutations = permutator(['AA', 'A8', '88']);
+        let combinations = create_combinations(['AA', 'A8', '88']);
 
-        console.log(permutations);
+        console.log(combinations);
 
+        // These are all the invalid permutations (there are a maximum of four Aces and four Eights)
         let invalid_permutations = [
             ['AA', 'AA', 'AA'],
             ['A8', 'AA', 'AA'],
@@ -120,12 +121,10 @@ export class AcesAndEights extends ExampleDescription {
             ['88', '88', 'A8'],
         ];
 
-        permutations = permutations.filter((f) => !invalid_permutations.some(r => JSON.stringify(r) === JSON.stringify(f)));
+        combinations = combinations.filter((f) => !invalid_permutations.some(r => JSON.stringify(r) === JSON.stringify(f)));
 
-        console.log(permutations);
-
-        for (let permutation of permutations) {
-            M.addWorld('w1' + permutation[0] + '_2' + permutation[1] + '_3' + permutation[2], new AcesAndEightsWorld(new Valuation(['1' + permutation[0], '2' + permutation[1], '3' + permutation[2]])));
+        for (let combination of combinations) {
+            M.addWorld('w1' + combination[0] + '_2' + combination[1] + '_3' + combination[2], new AcesAndEightsWorld(new Valuation(['1' + combination[0], '2' + combination[1], '3' + combination[2]])));
         }
 
         Object.keys(agents).forEach(agent =>
@@ -138,15 +137,17 @@ export class AcesAndEights extends ExampleDescription {
             }));
 
 
-        let selected = Math.floor(Math.random() * permutations.length);
-        let pointed = permutations[selected];
+        let selected = Math.floor(Math.random() * combinations.length);
+        let selected_cards = combinations[selected];
 
-        M.setPointedWorld('w1' + pointed[0] + '_2' + pointed[1] + '_3' + pointed[2]);
-        this.agent1 = pointed[0];
-        this.agent2 = pointed[1];
-        this.agent3 = pointed[2];
+        this.agent1 = selected_cards[0];
+        this.agent2 = selected_cards[1];
+        this.agent3 = selected_cards[2];
 
-        M.removeUnReachablePartFrom('w1' + pointed[0] + '_2' + pointed[1] + '_3' + pointed[2]);
+        let world_name = 'w1' + this.agent1 + '_2' + this.agent2 + '_3' + this.agent3;
+
+        M.setPointedWorld(world_name);
+        M.removeUnReachablePartFrom(world_name);
         return M;
     }
 

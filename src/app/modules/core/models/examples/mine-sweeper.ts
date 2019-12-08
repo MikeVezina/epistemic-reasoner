@@ -12,8 +12,8 @@ import { SymbolicEpistemicModel } from '../epistemicmodel/symbolic-epistemic-mod
 import { Obs, SymbolicRelation } from '../epistemicmodel/symbolic-relation';
 import { WorldValuationType } from '../epistemicmodel/world-valuation-type';
 import { SEModelDescriptor } from '../epistemicmodel/descriptor/se-model-descriptor';
-import jsonMineSweeper_8_8_10 from '../../../../../assets/bdds/minesweeper_8_8_10.json';
-import jsonMineSweeper_12_15_20 from '../../../../../assets/bdds/minesweeper_12_15_20.json';
+// import jsonMineSweeper_8_8_10 from '../../../../../assets/bdds/minesweeper_8_8_10.json';
+// import jsonMineSweeper_12_15_20 from '../../../../../assets/bdds/minesweeper_12_15_20.json';
 
 
 
@@ -276,11 +276,11 @@ export class MineSweeper extends ExampleDescription {
             worlds = undefined;
 
             constructor(r, c, m) {
-                if (r == 12 && c == 15 && m == 20)
-                    this.worlds = BDDWorkerService.createBDDFromJSON(jsonMineSweeper_12_15_20);
-                else if (r == 8 && c == 8 && m == 10) {
-                    this.worlds = BDDWorkerService.createBDDFromJSON(jsonMineSweeper_8_8_10);
-                }
+                // if (r == 12 && c == 15 && m == 20)
+                //     this.worlds = BDDWorkerService.createBDDFromJSON(jsonMineSweeper_12_15_20);
+                // else if (r == 8 && c == 8 && m == 10) {
+                //     this.worlds = BDDWorkerService.createBDDFromJSON(jsonMineSweeper_8_8_10);
+                // }
             }
 
             getAtomicPropositions() {
