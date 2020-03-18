@@ -197,6 +197,9 @@ class FlatlandSuccessorSet implements SuccessorSet {
         }
     }
 
+    /**
+     * Gathers "accessible worlds" from current state for comic strip.
+     */
     async getSomeSuccessors() {
         if (this.isSingleSuccessor()) {
             if (this.done) return [];

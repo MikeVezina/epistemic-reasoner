@@ -610,26 +610,27 @@ export class SimpleSymbolicHanabi extends ExampleDescription {
     }
 
 
-/**
+
     onRealWorldClick(env: Environment, point: { x: number; y: number; }) {
         let w = <SimpleHanabiWorld>env.getEpistemicModel().getPointedWorld();
         let card = w.getCardUnderCursor(point);
         if (card != undefined)
             env.perform(new EventModelAction({
                 name: "Agent " + card.agent + " plays " + card.nb + ".",
-                eventModel: this.getEventModelPlay(card.agent, card.nb, "p")
+                eventModel: undefined//await this.getEventModelPlay(card.agent, card.nb, "p")
             }));
     }
 
 
-    onRealWorldClickRight(env: Environment, point: { x: number; y: number; }) {
+    async onRealWorldClickRight(env: Environment, point: { x: number; y: number; }) {
         let w = <SimpleHanabiWorld>env.getEpistemicModel().getPointedWorld();
         let card = w.getCardUnderCursor(point);
+
         console.log(card)
         if (card != undefined)
             env.perform(new EventModelAction({
                 name: "Agent " + card.agent + " discards " + card.nb + ".",
-                eventModel: this.getEventModelPlay(card.agent, card.nb, "e")
+                eventModel:await this.getEventModelPlay(card.agent, card.nb, "e")
             }));
-    } */
+    }
 }

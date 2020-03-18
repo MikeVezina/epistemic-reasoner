@@ -427,13 +427,13 @@ export class Scheme {
 
         else if ((x[0] === 'lambda') || (x[0] === 'λ')) {
 
-            var vars = x[1];
+            var varsNext = x[1];
 
             var exp = x[2];
 
             return function () {
 
-                return Scheme.evalte(exp, Scheme.Env({ formal: vars, actual: arguments, outer: env }));
+                return Scheme.evalte(exp, Scheme.Env({ formal: varsNext, actual: arguments, outer: env }));
 
             };
 

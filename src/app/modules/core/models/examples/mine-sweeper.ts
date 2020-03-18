@@ -165,11 +165,6 @@ class MineSweeperWorld extends WorldValuation {
 
 export class MineSweeper extends ExampleDescription {
 
-
-
-
-
-
     getDescription(): string[] {
         var A = ["There is a grid with mines in certain cells. Other cells either contain the number of mines adjacent (including diagonals) or are empty."]
         A.push("")

@@ -5,7 +5,8 @@ import { BehaviorSubject } from "rxjs";
 import { Valuation } from '../modules/core/models/epistemicmodel/valuation';
 
 import * as Module from "./../../../cuddjs/release/cuddjs.js";
-import "!!file-loader?name=wasm/cuddjs.wasm2!./../../../cuddjs/release/cuddjs.wasm2";
+import * as fs from 'fs';
+// import "!!file-loader?name=wasm/cuddjs.wasm2!./../../../cuddjs/release/cuddjs.wasm2";
 //wasm/cuddjs.wasm is the "virtual" name
 
 
@@ -21,6 +22,7 @@ type pointer = number;
 export class BddService {
 
   bddModule: any;
+  wasmFile: any;
 
   atomIndex: Map<string, BDDAtom> = new Map();
   indexAtom: Map<BDDAtom, string> = new Map();
@@ -30,26 +32,34 @@ export class BddService {
   aliveBdds: Map<BDDNode, number> = new Map();
 
 
-  constructor(f: () => void) {
-    this.instantiateWasm("wasm/cuddjs.wasm2", f).catch(e => {
+  constructor(f: () => void, isServer: boolean = false) {
+    this.instantiateWasm("./../../../cuddjs/release/cuddjs.wasm2", isServer, f).catch(e => {
       //alert("Problem initializing WASM module, maybe the browser does not have enough memory?");
       console.log("problem instantiate wasm")
       throw e;
     });
   }
 
-  private async instantiateWasm(url: string, f: () => void) {
-    // fetch the wasm file
-    const wasmFile = await fetch(url);
+  private async instantiateWasm(url: string, isServer: boolean = false, f: () => void) {
 
-    // convert it into a binary array
-    const buffer = await wasmFile.arrayBuffer();
-    const binary = new Uint8Array(buffer);
+
+    if(!isServer)
+    {
+      require("!!file-loader?name=wasm/cuddjs.wasm2!./../../../cuddjs/release/cuddjs.wasm2");
+      const response = await fetch(url);
+      const buffer = await response.arrayBuffer();
+      this.wasmFile = new Uint8Array(buffer);
+    }
+    else {
+      const fileContents = fs.readFileSync(__dirname + "./../../../cuddjs/release/cuddjs.wasm2");
+      this.wasmFile = new Uint8Array(fileContents);
+    }
+
 
     // create module arguments
     // including the wasm-file
     const moduleArgs = {
-      wasmBinary: binary,
+      wasmBinary: this.wasmFile,
       onRuntimeInitialized: () => {
         this.bddModule._init();
         this.bddModule._set_debug_mode(false);

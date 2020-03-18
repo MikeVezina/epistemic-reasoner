@@ -45,6 +45,8 @@ export class Environment {
         // this.executableActions = []; //set to be true in case sbody else would like to compute it
         // Alex: I removed this, this should be useless, the actual reason was not this
         console.log("we compute the set of executable actions");
+        console.log(this);
+
         this.executableActions = [];
         let M = this._epistemicModel;
         const actions = this.getActions();
@@ -72,10 +74,20 @@ export class Environment {
         this.computeExecutableActions();
     }
 
+    async performAsync(action: Action)
+    {
+        this._epistemicModel = action.perform(this._epistemicModel);
+        return await this.computeExecutableActions();
+    }
+
     reset() {
         this._epistemicModel = this._exampleDescription.getInitialEpistemicModel();
         this.computeExecutableActions();
+    }
 
+    async resetAsync() {
+        this._epistemicModel = this._exampleDescription.getInitialEpistemicModel();
+        return await this.computeExecutableActions();
     }
 
 

@@ -1,11 +1,13 @@
 import {ExplicitEventModel} from './../eventmodel/explicit-event-model';
 import {ExplicitEpistemicModel} from './../epistemicmodel/explicit-epistemic-model';
 import {WorldValuation} from './../epistemicmodel/world-valuation';
+import {environment} from 'src/environments/environment';
 import {ExampleDescription} from '../environment/exampledescription';
 import {Valuation} from '../epistemicmodel/valuation';
 import {World} from '../epistemicmodel/world';
 import {EventModelAction} from '../environment/event-model-action';
 import {FormulaFactory} from '../formula/formula';
+import {MineSweeper} from './mine-sweeper';
 
 let agents = {
     'a': 1,
@@ -17,53 +19,84 @@ let agents = {
 /**
  * @param valuation a valuation
  * */
-class AcesAndEightsWorld extends WorldValuation {
+class IdentificationWorld extends WorldValuation {
+    private nbcols: number = 5;
+    private cellSize: number = 11;
+    private nbrows: number = 5;
+    static readonly xt = 38;
+    static readonly yt = 5;
+
+    private agentLocations: Map<any, String>;
 
 
     constructor(valuation: Valuation) {
         super(valuation);
-        this.agentPos['a'] = {x: 32, y: 32, r: 16};
-        this.agentPos['b'] = {x: 68 + 5, y: 20, r: 16};
-        this.agentPos['c'] = {x: 68 + 42, y: 32, r: 16};
+        this.agentLocations = new Map<any, String>();
+        this.agentLocations.set("1, 2", "A");
+        this.agentLocations.set("4, 4", "C");
+        this.agentLocations.set("4, 3", "B");
 
     }
 
     draw(context: CanvasRenderingContext2D) {
-        this.drawAgents(context);
-        context.font = '12px Verdana';
-        context.strokeStyle = '#000000';
-        for (var agent of Object.keys(agents)) {
-            for (var first_card of ['A', '8']) {
-                for (var second_card of ['A', '8']) {
-                    let agent_number = agents[agent];
 
-                    // Checks if card proposition is true, and draws that card (for a and b only)
-                    if (this.modelCheck(agent_number + first_card + second_card)) {
-                        WorldValuation.drawCard(context, {
-                            x: this.agentPos[agent].x - 16,
-                            y: this.agentPos[agent].y,
-                            w: 10,
-                            text: first_card,
-                            fontSize: 10
-                        });
-                        WorldValuation.drawCard(context, {
-                            x: this.agentPos[agent].x - 6,
-                            y: this.agentPos[agent].y,
-                            w: 10,
-                            text: second_card,
-                            fontSize: 10
-                        });
-                    }
-                }
-            }
+
+        context.strokeStyle = "black";
+        context.fillStyle = "lightgray";
+        context.fillRect(IdentificationWorld.xt, 0, this.nbcols * this.cellSize, this.nbrows * this.cellSize);
+        for (let col = 0; col <= this.nbcols; col++) {
+            context.beginPath();
+
+            context.moveTo(IdentificationWorld.xt + col * this.cellSize, IdentificationWorld.yt);
+            context.lineTo(IdentificationWorld.xt + col * this.cellSize, IdentificationWorld.yt + this.nbrows * this.cellSize);
+            context.stroke();
+        }
+        for (let row = 0; row <= this.nbrows; row++) {
+            context.beginPath();
+            context.moveTo(IdentificationWorld.xt, IdentificationWorld.yt + row * this.cellSize);
+            context.lineTo(IdentificationWorld.xt + this.nbcols * this.cellSize, IdentificationWorld.yt + row * this.cellSize);
+            context.stroke();
         }
 
+        context.fillStyle = "orange";
+        for (let col = 1; col <= this.nbcols; col++)
+            for (let row = 1; row <= this.nbrows; row++)
+                if (this.isClicked(row, col))
+                    context.fillRect(IdentificationWorld.xt + (col - 1) * this.cellSize, IdentificationWorld.yt + (row - 1) * this.cellSize,
+                        this.cellSize,
+                        this.cellSize);
+
+
+        context.font = (this.cellSize - 2) + "px Verdana";
+        context.fillStyle = "red";
+        let imgExplosionPadding = 0;
+        for (let col = 1; col <= this.nbcols; col++)
+            for (let row = 1; row <= this.nbrows; row++) {
+                let agentAtLocation: String = this.getAgent(row - 1, col - 1);
+
+                if(agentAtLocation)
+                {
+                    context.fillText(agentAtLocation.toString(),
+                        IdentificationWorld.xt + (col - 1) * this.cellSize + imgExplosionPadding,
+                        IdentificationWorld.yt + (row - 1) * this.cellSize + imgExplosionPadding,
+                        1000);
+                }
+
+            }
     }
 
+    private getAgent(row: number, col: number) {
+        let locationString = row + ", " + col;
+        return this.agentLocations.get(locationString);
+    }
+
+    private isClicked(row: number, col: number) {
+        return true;
+    }
 }
 
 
-class AcesAndEights extends ExampleDescription {
+export class Identification extends ExampleDescription {
     getDescription(): string[] {
         return ['Three agents are each assigned two cards. Agents can only see the cards of other agents, and must use announcements to determine which cards they have. '];
     }
@@ -82,7 +115,7 @@ class AcesAndEights extends ExampleDescription {
     }
 
     getName() {
-        return 'Aces & Eights';
+        return 'Identification';
     }
 
     getInitialEpistemicModel() {
@@ -123,7 +156,7 @@ class AcesAndEights extends ExampleDescription {
         combinations = combinations.filter((f) => !invalid_permutations.some(r => JSON.stringify(r) === JSON.stringify(f)));
 
         for (let combination of combinations) {
-            M.addWorld('w1' + combination[0] + '_2' + combination[1] + '_3' + combination[2], new AcesAndEightsWorld(new Valuation(['1' + combination[0], '2' + combination[1], '3' + combination[2]])));
+            M.addWorld('w1' + combination[0] + '_2' + combination[1] + '_3' + combination[2], new IdentificationWorld(new Valuation(['1' + combination[0], '2' + combination[1], '3' + combination[2]])));
         }
 
         Object.keys(agents).forEach(agent =>
@@ -186,5 +219,3 @@ class AcesAndEights extends ExampleDescription {
 
 
 }
-
-export {AcesAndEights, AcesAndEightsWorld};

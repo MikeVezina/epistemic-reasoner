@@ -1,5 +1,9 @@
 import { Rectangle } from './../rectangle';
-import { environment } from 'src/environments/environment';
+import { environment } from './../../../../../environments/environment';
+
+  class Image {
+    public src;
+  }
 
 
 export abstract class World {

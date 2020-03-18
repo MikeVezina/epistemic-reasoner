@@ -1,4 +1,4 @@
-import { environment } from 'src/environments/environment';
+import { environment } from './../../../../../environments/environment';
 import { ExplicitEpistemicModel } from './../epistemicmodel/explicit-epistemic-model';
 import { Postcondition } from './postcondition';
 import { PropositionalAssignmentsPostcondition } from './propositional-assignments-postcondition';

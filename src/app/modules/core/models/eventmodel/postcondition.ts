@@ -1,5 +1,13 @@
 import { EpistemicModel } from './../epistemicmodel/epistemic-model';
 
+
+
+
+import {JSDOM} from 'jsdom';
+
+let jsDom = new JSDOM();
+let $ = require("jquery")(jsDom.window);
+console.log("Defined?");
 export abstract class Postcondition {
 
     /**
