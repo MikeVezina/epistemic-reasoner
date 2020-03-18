@@ -2,7 +2,8 @@
   "name": "epistemic-reasoner",
   "version": "0.0.0",
   "scripts": {
-    "start": "tsc && node dist/server.js"
+    "start": "tsc && node dist/server.js",
+    "test": "tsc && jest"
   },
   "private": true,
   "dependencies": {
