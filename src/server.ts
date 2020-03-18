@@ -2,7 +2,6 @@ import {ApiRouter} from './ApiRouter';
 
 //Install express server
 const express = require('express');
-const path = require('path');
 const app = express();
 
 app.use(express.json());
@@ -10,6 +9,9 @@ app.use(express.json());
 let a = new ApiRouter();
 a.createApp(app);
 
-console.log("Hello")
-// Start the app by listening on the default Heroku port
-app.listen(process.env.PORT || 8080);
+// Start the app on the provided port
+let port = process.env.PORT || 8080;
+
+app.listen(port, () => {
+    console.log("Application server started on port " + port);
+});
