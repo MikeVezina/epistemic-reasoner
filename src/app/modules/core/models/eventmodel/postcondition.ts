@@ -1,7 +1,6 @@
 import { EpistemicModel } from './../epistemicmodel/epistemic-model';
 import extend from 'extend';
 
-console.log("Defined?");
 export abstract class Postcondition {
 
     /**
