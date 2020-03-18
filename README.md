@@ -1,6 +1,9 @@
 # Epistemic Reasoner API (Node.js)
 [![Build Status](https://travis-ci.com/MikeVezina/epistemic-reasoner.svg?token=5XuGRvxnd7EFyJcxyBNe&branch=master)](https://travis-ci.com/MikeVezina/epistemic-reasoner)
 
+## Epistemic Agents
+The agents using this reasoner can be found at: https://github.com/MikeVezina/epistemic-agents
+
 ### Borrowed reasoner code from Hintikkasworld
 The Original repository is located [here](https://gitlab.inria.fr/fschwarz/hintikkasworld). Our reasoner currently only supports explicit epistemic models.
 
