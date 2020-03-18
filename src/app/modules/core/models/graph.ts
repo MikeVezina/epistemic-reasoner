@@ -1,4 +1,4 @@
-import { Node } from './../services/models/node';
+
 export class Graph {
 
     protected nodes: { [id: string]: object };

@@ -19,51 +19,17 @@ let agents = {
  * */
 class AcesAndEightsWorld extends WorldValuation {
 
-
     constructor(valuation: Valuation) {
         super(valuation);
-        this.agentPos['a'] = {x: 32, y: 32, r: 16};
-        this.agentPos['b'] = {x: 68 + 5, y: 20, r: 16};
-        this.agentPos['c'] = {x: 68 + 42, y: 32, r: 16};
 
     }
-
-    draw(context: CanvasRenderingContext2D) {
-        this.drawAgents(context);
-        context.font = '12px Verdana';
-        context.strokeStyle = '#000000';
-        for (var agent of Object.keys(agents)) {
-            for (var first_card of ['A', '8']) {
-                for (var second_card of ['A', '8']) {
-                    let agent_number = agents[agent];
-
-                    // Checks if card proposition is true, and draws that card (for a and b only)
-                    if (this.modelCheck(agent_number + first_card + second_card)) {
-                        WorldValuation.drawCard(context, {
-                            x: this.agentPos[agent].x - 16,
-                            y: this.agentPos[agent].y,
-                            w: 10,
-                            text: first_card,
-                            fontSize: 10
-                        });
-                        WorldValuation.drawCard(context, {
-                            x: this.agentPos[agent].x - 6,
-                            y: this.agentPos[agent].y,
-                            w: 10,
-                            text: second_card,
-                            fontSize: 10
-                        });
-                    }
-                }
-            }
-        }
-
-    }
-
 }
 
 
 class AcesAndEights extends ExampleDescription {
+    getAgents(): string[] {
+        return Object.keys(agents);
+    }
     getDescription(): string[] {
         return ['Three agents are each assigned two cards. Agents can only see the cards of other agents, and must use announcements to determine which cards they have. '];
     }
@@ -152,31 +118,32 @@ class AcesAndEights extends ExampleDescription {
 
 
     getActions() {
+        let agentNames = Object.keys(agents);
 
         return [
             new EventModelAction({
                 name: 'Alice does not know',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K a 1AA) or (K a 1A8) or (K a 188)))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K a 1AA) or (K a 1A8) or (K a 188)))'), agentNames)
             }),
             new EventModelAction({
                 name: 'Alice knows',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K a 1AA) or (K a 1A8) or (K a 188))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K a 1AA) or (K a 1A8) or (K a 188))'), agentNames)
             }),
             new EventModelAction({
                 name: 'Bob does not know',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K b 2AA) or (K b 2A8) or (K b 288)))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K b 2AA) or (K b 2A8) or (K b 288)))'), agentNames)
             }),
             new EventModelAction({
                 name: 'Bob knows',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K b 2AA) or (K b 2A8) or (K b 288))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K b 2AA) or (K b 2A8) or (K b 288))'), agentNames)
             }),
             new EventModelAction({
                 name: 'Carl does not know',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K c 3AA) or (K c 3A8) or (K c 388)))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('(not((K c 3AA) or (K c 3A8) or (K c 388)))'), agentNames)
             }),
             new EventModelAction({
                 name: 'Carl knows',
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K c 3AA) or (K c 3A8) or (K c 388))'))
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(FormulaFactory.createFormula('((K c 3AA) or (K c 3A8) or (K c 388))'), agentNames)
             }),
 
 

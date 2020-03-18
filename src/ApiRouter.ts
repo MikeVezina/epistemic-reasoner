@@ -1,6 +1,5 @@
 import {ExplicitEpistemicModel} from './app/modules/core/models/epistemicmodel/explicit-epistemic-model';
 import * as express from 'express';
-import {AcesAndEights, AcesAndEightsWorld} from './app/modules/core/models/examples/aces-and-eights';
 import {Valuation} from './app/modules/core/models/epistemicmodel/valuation';
 import {ExampleDescription} from './app/modules/core/models/environment/exampledescription';
 import {EpistemicModel} from './app/modules/core/models/epistemicmodel/epistemic-model';
@@ -19,6 +18,7 @@ class CustomWorld extends WorldValuation {
 
 
 class CustomDescription extends ExampleDescription {
+
     private actions: EventModelAction[] = [];
     private atomicPropositions: string[];
     private name: string;
@@ -62,12 +62,18 @@ class CustomDescription extends ExampleDescription {
         for (let {description, formula} of rawActions) {
             let parsedFormula = FormulaFactory.createFormula(formula);
 
+
+
             this.actions.push(new EventModelAction({
                 name: description,
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(parsedFormula)
+                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(parsedFormula, this.getAgents())
             }));
 
         }
+    }
+
+    getAgents(): string[] {
+        return this.getInitialEpistemicModel().getAgents();
     }
 
     private parseModel(): ExplicitEpistemicModel {

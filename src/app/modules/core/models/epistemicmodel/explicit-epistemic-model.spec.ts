@@ -1,6 +1,6 @@
 import * as types from '../formula/formula'
 import { ExplicitEpistemicModel } from './explicit-epistemic-model';
-import { MuddyChildren } from '../examples/muddy-children';
+import {MuddyChildren} from '../examples/muddy-children';
 describe('ExplicitEpistemicModel', () => {
   it('should create an instance', () => {
     expect(new ExplicitEpistemicModel()).toBeTruthy();

@@ -1,6 +1,4 @@
-import { Environment } from './environment';
-import { ExplicitEpistemicModel } from './../epistemicmodel/explicit-epistemic-model';
-import { EpistemicModel } from './../epistemicmodel/epistemic-model';
+import { EpistemicModel } from '../epistemicmodel/epistemic-model';
 import { World } from '../epistemicmodel/world';
 
 
@@ -15,15 +13,10 @@ export abstract class ExampleDescription {
     abstract getInitialEpistemicModel(): EpistemicModel;
     abstract getDescription(): string[]
     abstract getActions();
+    abstract getAgents(): string[];
 
     getWorldExample(): World {
         let M = this.getInitialEpistemicModel(); 
         return M.getPointedWorld();
     }
-
-    
-    public onRealWorldClick(env: Environment, point: Point): void {return};
-    public onRealWorldClickRightButton(env: Environment, point: Point): void {return};
-
-   // getAtomicPropositions(): string[] {return []}; //should be abstract and implemented in every subclass
 }

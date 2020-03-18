@@ -1,11 +1,9 @@
-import { environment } from './../../../../../environments/environment';
-import { ExplicitEpistemicModel } from './../epistemicmodel/explicit-epistemic-model';
+import { ExplicitEpistemicModel } from '../epistemicmodel/explicit-epistemic-model';
 import { Postcondition } from './postcondition';
-import { PropositionalAssignmentsPostcondition } from './propositional-assignments-postcondition';
 import { TrivialPostcondition } from './trivial-postcondition';
-import { Formula, FormulaFactory } from './../formula/formula';
+import { Formula, FormulaFactory } from '../formula/formula';
 import { EventModel } from './event-model';
-import { Graph } from './../graph';
+import { Graph } from '../graph';
 import { Event } from './event';
 import { World } from '../epistemicmodel/world';
 
@@ -22,13 +20,6 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
     getPointedAction(): string {
         return this.getPointedNode();
     }
-
-
-
-
-    /*	this.nodes = new Array();
-      this.successors = new Array();
-      this.dotstyle = "[shape=box, fillcolor=lightblue2, style=filled]";*/
 
     /**
      * @memberof ActionModel
@@ -52,7 +43,6 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
                 else
                     return "pre: " + this.pre.prettyPrint() + "; post: " + post.toString()
             }
-            // toHTML: function() {return ' <table><tr><td>pre: </td><td>' + formulaPrettyPrint(this.pre) + '</td></tr><tr><td>post: </td><td>' + post.toString() + '</td></tr></table>'}
         });
     }
 
@@ -66,6 +56,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
     addEvent(e, pre, post) {
         this.addAction(e, pre, post)
     }
+
     /**
      * @param e event identifier
      * @returns (the internal representation of) a formula that is the
@@ -121,7 +112,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
          */
         function product(M: ExplicitEpistemicModel, E: ExplicitEventModel): ExplicitEpistemicModel {
             let ME = new ExplicitEpistemicModel();
-            let agents = environment.agents;
+            let agents = M.getAgents();
 
             for (let w in M.getNodes())
                 for (let e in E.nodes) {
@@ -176,11 +167,11 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
 
 
-    static getEventModelPublicAnnouncement(formula: Formula): ExplicitEventModel {
+    static getEventModelPublicAnnouncement(formula: Formula, agents: String[]): ExplicitEventModel {
         let E = new ExplicitEventModel();
         E.addAction("e", formula, new TrivialPostcondition());
 
-        for (let a of environment.agents)
+        for (let a of agents)
             E.addEdge(a, "e", "e");
 
         E.setPointedAction("e");
@@ -192,7 +183,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
 
 
-    static getActionModelPrivateAnnouncement(formula: Formula, agent: string) {
+    static getActionModelPrivateAnnouncement(formula: Formula, agent: string, agents: String[]) {
         var E = new ExplicitEventModel();
         E.addAction("e", formula, new TrivialPostcondition());
         E.addAction("t", FormulaFactory.createFormula("top"), new TrivialPostcondition());
@@ -202,7 +193,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
         E.addEdge(agent, "t", "t");
         E.setPointedAction("e");
 
-        for (let a of environment.agents)
+        for (let a of agents)
             if (a != agent) {
                 E.addEdge(a, "e", "t");
                 E.addEdge(a, "t", "t");
@@ -214,7 +205,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
 
 
-    static getActionModelSemiPrivateAnnouncement(formula: Formula, agent: string) {
+    static getActionModelSemiPrivateAnnouncement(formula: Formula, agent: string, agents: String[]) {
 
         var E = new ExplicitEventModel();
         E.addAction("e", formula, new TrivialPostcondition());
@@ -225,7 +216,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
         E.addEdge(agent, "t", "t");
         E.setPointedAction("e");
 
-        for (let a of environment.agents)
+        for (let a of agents)
             if (a != agent) {
                 E.addEdge(a, "e", "t");
                 E.addEdge(a, "t", "e");

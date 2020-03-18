@@ -1,12 +1,6 @@
 import { EpistemicModel } from './../epistemicmodel/epistemic-model';
+import extend from 'extend';
 
-
-
-
-import {JSDOM} from 'jsdom';
-
-let jsDom = new JSDOM();
-let $ = require("jquery")(jsDom.window);
 console.log("Defined?");
 export abstract class Postcondition {
 
@@ -28,7 +22,7 @@ export abstract class Postcondition {
         }
         else {
             if (e instanceof Object) {
-                let c = $.extend(true, Object.create(Object.getPrototypeOf(e)), e);
+                let c = extend(true, Object.create(Object.getPrototypeOf(e)), e);
 
                 for (let i in e) {
                     c[i] = Postcondition.cloneWorld(e[i]); //here it is not a world, it is ugly...

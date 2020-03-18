@@ -3,8 +3,6 @@ import { ExplicitSuccessorSet } from './explicit-successor-set';
 import * as types from './../formula/formula';
 import { Graph } from './../graph';
 import { EpistemicModel } from './epistemic-model';
-import { WorldValuation } from './world-valuation';
-import { environment } from '../../../../../environments/environment';
 import { World } from './world';
 import { SuccessorSet } from './successor-set';
 
@@ -19,7 +17,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
 
 
     async check(formula: types.Formula) {
-        return await this.modelCheck(this.getPointedWorldID(), formula);
+        return this.modelCheck(this.getPointedWorldID(), formula);
     }
 
     nodeToID: Map<World, string> = new Map();
@@ -172,7 +170,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     current one
     @example let Mcontracted = M.contract();
     **/
-    contract() {
+    contract(agents: any[]) {
 
         function getClassNumberToWorldName(i) {
             return "w" + i;
@@ -230,7 +228,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                     let sig = new Array();
                     sig.push(pi[w]);
 
-                    for (let agent of environment.agents) {
+                    for (let agent of agents) {
                         let sig2 = new Array();
                         let successors = (model.getSuccessors(w, agent));
                         if (!(successors == undefined)) {
@@ -268,7 +266,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                     } else {
                         var diff = false;
                         var j = 1;
-                        while (!diff && j < environment.agents.length) {
+                        while (!diff && j < agents.length) {
                             if (signature[sigma[i]][j].length != signature[sigma[i - 1]][j].length) {
                                 num = num + 1;
                                 diff = true;
@@ -331,7 +329,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
             }
 
             for (let i = 1; i < pireversed.length; i++) {//boucle de créations des arrêtes
-                for (let ag of environment.agents) {
+                for (let ag of agents) {
                     if (M.getSuccessors(pireversed[i][0], ag) !== undefined) {
                         let successors = M.getSuccessors(pireversed[i][0], ag);
                         for (let s of successors) {

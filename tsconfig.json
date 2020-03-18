@@ -1,8 +1,9 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "baseUrl": "./",
-    "outDir": "./dist/out-tsc",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
     "sourceMap": true,
     "declaration": false,
     "module": "commonjs",
@@ -10,13 +11,13 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es5",
+    "target": "es6",
     "typeRoots": [
       "node_modules/@types"
     ],
+    "types": ["node", "express", "jasmine"],
     "lib": [
-      "es2018",
-      "dom"
+      "es2018"
     ]
   }
 }
