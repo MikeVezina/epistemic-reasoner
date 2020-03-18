@@ -44,23 +44,6 @@ export class Valuation {
     return truePropositions.join();
   }
 
-/* 
-  getTruePropositions(): string[] {
-    let A = [];
-    for (var proposition in this.propositions)
-      if (this.propositions[proposition])
-        A.push(proposition);
-    return A;
-  }
-
-  getFalsePropositions(): string[] {
-    let A = [];
-    for (var proposition in this.propositions)
-      if (!this.propositions[proposition])
-        A.push(proposition);
-    return A;
-  }*/
-
   getPropositionMap() : {[p:string]:boolean} {
     return this.propositions;
   }

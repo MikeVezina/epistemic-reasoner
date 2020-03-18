@@ -1,17 +1,17 @@
-import {Formula, AtomicFormula, TrueFormula, OrFormula, FormulaFactory} from './formula';
+import {Formula, AtomicFormula, OrFormula, FormulaFactory} from './formula';
 
 describe('Formula', () => {
 
   it('should be able to create an atom', () => {
-    expect((((FormulaFactory.createFormula("ma")) instanceof AtomicFormula) == true)).toBeTruthy();
+    expect((((FormulaFactory.createFormula("ma")) instanceof AtomicFormula))).toBeTruthy();
   });
 
   it('should be able to create a disjunction', () => {
-    expect((((FormulaFactory.createFormula("(ma or mb)")) instanceof OrFormula) == true)).toBeTruthy();
+    expect((((FormulaFactory.createFormula("(ma or mb)")) instanceof OrFormula))).toBeTruthy();
   });
   
   it('the first part of disjunction should be atomic', () => {
-    expect((((<OrFormula>(FormulaFactory.createFormula(("(ma or mb)")).formulas[0])) instanceof AtomicFormula) == true)).toBeTruthy();
+    expect((((<OrFormula> (FormulaFactory.createFormula(("(ma or mb)")).formulas[0])) instanceof AtomicFormula))).toBeTruthy();
   }); 
 
   it('the pretty printer works on true', () => {

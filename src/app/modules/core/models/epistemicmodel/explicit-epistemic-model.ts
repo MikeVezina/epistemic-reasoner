@@ -1,7 +1,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { ExplicitSuccessorSet } from './explicit-successor-set';
 import * as types from './../formula/formula';
-import { Graph } from './../graph';
+import { Graph } from '../graph';
 import { EpistemicModel } from './epistemic-model';
 import { World } from './world';
 import { SuccessorSet } from './successor-set';
@@ -62,7 +62,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
         this.addNode(w, content);
         console.log("world of id " + w + " is added")
         if(this.nodeToID.has(content))
-            throw "oups, this world has already been added!";
+            throw "World " + w + " already exists.";
         this.nodeToID.set(content, w);
         console.log("nodeToID contains " + this.nodeToID.size + " elements")
     }
