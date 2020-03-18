@@ -1,7 +1,7 @@
 # Epistemic Reasoner API (Node.js)
 [![Build Status](https://travis-ci.com/MikeVezina/epistemic-reasoner.svg?token=5XuGRvxnd7EFyJcxyBNe&branch=master)](https://travis-ci.com/MikeVezina/epistemic-reasoner)
 
-### Borrowed Reasoner Code from Hintikkasworld
+### Borrowed reasoner code from Hintikkasworld
 The Original repository is located [here](https://gitlab.inria.fr/fschwarz/hintikkasworld). Our reasoner currently only supports explicit epistemic models.
 
 # Getting Started
@@ -30,3 +30,15 @@ npm test
 npm start
 ```
 
+# API Endpoints
+### POST /api/createWorld
+Creates a description/world. All subsequent API requests act on this world.
+
+### GET /api/actions
+Gets the current executable actions for all agents.
+
+### POST /api/modelCheck
+Checks if a formula is valid in the current model. (i.e. does alice know her cards?)
+
+### POST /api/performAction
+Performs an executable action on the current model. 
