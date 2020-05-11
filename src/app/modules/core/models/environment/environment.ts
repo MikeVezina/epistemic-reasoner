@@ -1,6 +1,7 @@
 import { Action } from './action';
 import { ExampleDescription } from './exampledescription';
 import { EpistemicModel } from '../epistemicmodel/epistemic-model';
+import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model';
 
 export class Environment {
     private _epistemicModel: EpistemicModel;
@@ -17,8 +18,11 @@ export class Environment {
         this.reset();
     }
 
-    getEpistemicModel(): EpistemicModel {
-        return this._epistemicModel;
+    /**
+     * Gets the current state of the epistemic model.
+     */
+    getEpistemicModel(): ExplicitEpistemicModel {
+        return <ExplicitEpistemicModel> this._epistemicModel;
     }
 
     setEpistemicModel(M: EpistemicModel) {

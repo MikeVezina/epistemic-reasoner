@@ -1,16 +1,19 @@
-import { BehaviorSubject } from 'rxjs';
-import { ExplicitSuccessorSet } from './explicit-successor-set';
+import {BehaviorSubject} from 'rxjs';
+import {ExplicitSuccessorSet} from './explicit-successor-set';
 import * as types from './../formula/formula';
-import { Graph } from '../graph';
-import { EpistemicModel } from './epistemic-model';
-import { World } from './world';
-import { SuccessorSet } from './successor-set';
+import {Graph} from '../graph';
+import {EpistemicModel} from './epistemic-model';
+import {World} from './world';
+import {SuccessorSet} from './successor-set';
+import {Valuation} from './valuation';
+import {WorldValuation} from './world-valuation';
 
 export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     isLoadedObservable(): BehaviorSubject<boolean> {
         let isLoaded$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
         return isLoaded$;
     }
+
     isLoaded(): boolean {
         return true;
     }
@@ -25,24 +28,84 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
 
     getSuccessors(w: World, a: string): SuccessorSet {
         let successorIDs = this.getSuccessorsID(this.nodeToID.get(w), a);
-        console.log(a + "-successors of " + this.nodeToID.get(w) + ": " +  successorIDs);
+        console.log(a + '-successors of ' + this.nodeToID.get(w) + ': ' + successorIDs);
         return new ExplicitSuccessorSet(successorIDs.map((id) => this.getNode(id)));
     }
 
+
     /**
-    @param w ID of a node
-    @example M.setPointedWorld("w")
-    **/
-    setPointedWorld(w: string) {
-        if (this.nodes[w] == undefined)
-            throw ("the epistemic model does not contain any world of ID " + w);
-        this.setPointedNode(w);
+     * Evaluates a valuation in a given world. Returns true if the propositions in the valuation matches the values in the specified world. Also returns true
+     * if either parameter is falsy (undefined, etc.), or if the valuation proposition map is empty. Returns false otherwise.
+     * @param world The world to check.
+     * @param props The valuation
+     */
+    private static evalAllProps(world: World, props: Valuation): boolean {
+
+        if (!world || !props) {
+            return true;
+        }
+
+        let propMap = props.getPropositionMap();
+
+        for (let propKey of Object.keys(propMap)) {
+            // Whether or not the prop should be true/false
+            let propVal = propMap[propKey];
+
+            // Confirm world prop evaluation matches the specified valuation, otherwise return false
+            if (world.modelCheck(propKey) !== propVal) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     @param w ID of a node
+     @example M.setPointedWorld("w")
+     **/
+    setPointedWorld(w: String | Valuation) {
+
+        if (w instanceof Valuation) {
+            w = <String> this.findPointedWorld(w);
+        }
+
+        if (w instanceof String || typeof w === 'string') {
+            if (this.nodes[<string> w] == undefined) {
+                throw ('the epistemic model does not contain any world of ID ' + w);
+            }
+
+            this.setPointedNode(w);
+        }
+
+
+    }
+
+    hasPossibleWorld(props: Valuation): boolean {
+        return this.findPointedWorld(props) !== undefined;
+    }
+
+    private findPointedWorld(props: Valuation): String {
+        if (this.getPointedWorldID() && ExplicitEpistemicModel.evalAllProps(this.getPointedWorld(), props)) {
+            return this.getPointedWorldID();
+        }
+
+        for (let nodesKey in this.nodes) {
+            let node: World = <World> this.nodes[nodesKey];
+
+            if (ExplicitEpistemicModel.evalAllProps(node, props)) {
+                return nodesKey;
+            }
+
+        }
+
+        return undefined;
     }
 
 
     /**
-    @returns the pointed world
-    **/
+     @returns the pointed world
+     **/
     getPointedWorldID() {
         return this.getPointedNode();
     }
@@ -50,41 +113,70 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     /**
      * @param w world identifier
      * @param content the content a world. It is an object that should
-         implement a method modelCheck for check atomic formulas.
-             Typically, it is an object containing a propositional World.
- 
-             If content is an array, then content is replaced by
-             new Valuation(content)
-        @example M.addWorld("w", new Valuation(["p", "s"]))
-        @example M.addWorld("w", new SallyAndAnneWorld(["ahere", "bhere", "marbleb"]));
+     implement a method modelCheck for check atomic formulas.
+     Typically, it is an object containing a propositional World.
+
+     If content is an array, then content is replaced by
+     new Valuation(content)
+     @example M.addWorld("w", new Valuation(["p", "s"]))
+     @example M.addWorld("w", new SallyAndAnneWorld(["ahere", "bhere", "marbleb"]));
      * */
     addWorld(w: string, content: World) {
         this.addNode(w, content);
-        console.log("world of id " + w + " is added")
-        if(this.nodeToID.has(content))
-            throw "World " + w + " already exists.";
+        console.log('world of id ' + w + ' is added');
+        if (this.nodeToID.has(content)) {
+            throw 'World ' + w + ' already exists.';
+        }
         this.nodeToID.set(content, w);
-        console.log("nodeToID contains " + this.nodeToID.size + " elements")
+        console.log('nodeToID contains ' + this.nodeToID.size + ' elements');
     }
 
 
-
-
-
     /**
-    @returns a string that represents the list of node IDs
-    */
+     @returns a string that represents the list of node IDs
+     */
     getWorldsPrettyPrint() {
-        let s = "";
+        let s = '';
 
         for (let w in this.getNodes()) {
-            s += w + ", ";
+            s += w + ', ';
         }
 
-        s += "...";
+        s += '...';
 
         return s;
 
+    }
+
+    /**
+     * Obtains shallow (first-level) knowledge.
+     * @param w
+     * @param agent
+     */
+    obtainKnowledge(agent: string, w: string=this.getPointedWorldID()): Valuation {
+
+        if (this.nodes[w] === undefined)
+            throw 'world does not exist ' + w;
+
+        // Get current world valuation map {prop -> Boolean}
+        let valuationMap: { [p: string]: boolean } = (<WorldValuation> this.nodes[w]).valuation.getClonedPropositionMap();
+
+        this.getSuccessorsID(w, agent)
+            .forEach((succ) => {
+
+                let succNode: WorldValuation = <WorldValuation> this.nodes[succ];
+
+                // Remove any proposition valuations that do not match the successors.
+                for (let prop of Object.keys(valuationMap))
+                {
+                    let val = valuationMap[prop];
+                    if (succNode.modelCheck(prop) !== val)
+                        delete valuationMap[prop];
+
+                }
+            });
+
+        return new Valuation(valuationMap);
     }
 
     /**
@@ -96,84 +188,90 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
      * */
     modelCheck(w: string, phi: types.Formula): boolean {
         if (this.getNode(w) == undefined) {
-            throw ("No worlds named " + w + ". Worlds of the epistemic model are "
+            throw ('No worlds named ' + w + '. Worlds of the epistemic model are '
                 + this.getWorldsPrettyPrint());
         }
 
         switch (true) {
-            case (phi instanceof types.TrueFormula): return true;
-            case (phi instanceof types.AtomicFormula): return (<World>this.nodes[w]).modelCheck((<types.AtomicFormula>phi).getAtomicString());
-            case (phi instanceof types.FalseFormula): return false;
-            case (phi instanceof types.ImplyFormula): return !this.modelCheck(w, (<types.ImplyFormula>phi).formula1) || this.modelCheck(w, (<types.ImplyFormula>phi).formula2);
-            case (phi instanceof types.EquivFormula): return this.modelCheck(w, (<types.EquivFormula>phi).formula1) == this.modelCheck(w, (<types.EquivFormula>phi).formula2);
-            case (phi instanceof types.AndFormula): return (<types.AndFormula>phi).formulas.every((f) => this.modelCheck(w, f));
-            case (phi instanceof types.OrFormula): return (<types.OrFormula>phi).formulas.some((f) => this.modelCheck(w, f));
+            case (phi instanceof types.TrueFormula):
+                return true;
+            case (phi instanceof types.AtomicFormula):
+                return (<World> this.nodes[w]).modelCheck((<types.AtomicFormula> phi).getAtomicString());
+            case (phi instanceof types.FalseFormula):
+                return false;
+            case (phi instanceof types.ImplyFormula):
+                return !this.modelCheck(w, (<types.ImplyFormula> phi).formula1) || this.modelCheck(w, (<types.ImplyFormula> phi).formula2);
+            case (phi instanceof types.EquivFormula):
+                return this.modelCheck(w, (<types.EquivFormula> phi).formula1) == this.modelCheck(w, (<types.EquivFormula> phi).formula2);
+            case (phi instanceof types.AndFormula):
+                return (<types.AndFormula> phi).formulas.every((f) => this.modelCheck(w, f));
+            case (phi instanceof types.OrFormula):
+                return (<types.OrFormula> phi).formulas.some((f) => this.modelCheck(w, f));
             case (phi instanceof types.XorFormula): {
                 let c = 0;
-                for (let f of (<types.XorFormula>phi).formulas) {
-                    if (this.modelCheck(w, f))
+                for (let f of (<types.XorFormula> phi).formulas) {
+                    if (this.modelCheck(w, f)) {
                         c++;
+                    }
 
-                    if (c > 1)
+                    if (c > 1) {
                         return false;
+                    }
                 }
                 return (c == 1);
             }
-            case (phi instanceof types.NotFormula): return !this.modelCheck(w, (<types.NotFormula>phi).formula);
+            case (phi instanceof types.NotFormula):
+                return !this.modelCheck(w, (<types.NotFormula> phi).formula);
             case (phi instanceof types.KFormula): {
-                let phi2 = <types.KFormula>phi;
+                let phi2 = <types.KFormula> phi;
                 let agent = phi2.agent;
                 let psi = phi2.formula;
                 return this.getSuccessorsID(w, agent)
                     .every(u => this.modelCheck(u, psi));
             }
-            case (phi instanceof types.KposFormula):
-                {
-                    let phi2 = <types.KposFormula>phi;
-                    let agent = phi2.agent;
-                    let psi = phi2.formula;
-                    return this.getSuccessorsID(w, agent)
-                        .some(u => this.modelCheck(u, psi));
-                }
+            case (phi instanceof types.KposFormula): {
+                let phi2 = <types.KposFormula> phi;
+                let agent = phi2.agent;
+                let psi = phi2.formula;
+                return this.getSuccessorsID(w, agent)
+                    .some(u => this.modelCheck(u, psi));
+            }
             case (phi instanceof types.KwFormula): {
-                let phi2 = <types.KwFormula>phi;
+                let phi2 = <types.KwFormula> phi;
                 let agent = phi2.agent;
                 let psi = phi2.formula;
                 if (this.getSuccessorsID(w, agent)
-                    .every(u => this.modelCheck(u, psi)))
+                    .every(u => this.modelCheck(u, psi))) {
                     return true;
-                else if (this.getSuccessorsID(w, agent)
+                } else if (this.getSuccessorsID(w, agent)
                     .every(u => !this.modelCheck(u, psi))) {
                     return true;
+                } else {
+                    return false;
                 }
-                else return false;
             }
             case (phi instanceof types.ExactlyFormula): {
                 let c = 0;
-                for (let s of (<types.ExactlyFormula>phi).variables) {
-                    if ((<World>this.nodes[w]).modelCheck(s)) {
-                        c += 1
+                for (let s of (<types.ExactlyFormula> phi).variables) {
+                    if ((<World> this.nodes[w]).modelCheck(s)) {
+                        c += 1;
                     }
                 }
-                return (c == (<types.ExactlyFormula>phi).count)
+                return (c == (<types.ExactlyFormula> phi).count);
             }
         }
     }
 
 
-
-
-
-
     /**
-    @return a new epistemic model that is the bisimilar contraction of the
-    current one
-    @example let Mcontracted = M.contract();
-    **/
+     @return a new epistemic model that is the bisimilar contraction of the
+     current one
+     @example let Mcontracted = M.contract();
+     **/
     contract(agents: any[]) {
 
         function getClassNumberToWorldName(i) {
-            return "w" + i;
+            return 'w' + i;
         }
 
         function getSameValuationDictionnary(M) {  //regroupe par valuation identiques => val est un dict (valuation, [idnode1,idnode2,..])
@@ -181,10 +279,11 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
             for (let idnode in M.nodes) {
                 let valuation = M.nodes[idnode].toString();
 
-                if (valuation in val)
+                if (valuation in val) {
                     val[valuation].push(idnode);
-                else
+                } else {
                     val[valuation] = [idnode];
+                }
             }
             return val;
         }
@@ -200,9 +299,8 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                 }
                 groupe = groupe + 1;
             }
-            return { pi: pi, nb: groupe - 1 };
+            return {pi: pi, nb: groupe - 1};
         }
-
 
 
         function raffine(pi, model, nbgroupes) {
@@ -210,8 +308,8 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
             function constructSignature(pi, model) {
 
                 /**
-                * Supress duplication
-                */
+                 * Supress duplication
+                 */
                 function cleanArray(array) {
                     var i, j, len = array.length, out = [], obj = {};
                     for (i = 0; i < len; i++) {
@@ -247,9 +345,13 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
             function getStatesSortedAccordingToSignature(pi, signature) {
                 var sigma = Object.keys(pi);
 
-                sigma.sort(function (w, u) {
-                    if (signature[w] < signature[u]) return -1;
-                    if (signature[w] > signature[u]) return 1;
+                sigma.sort(function(w, u) {
+                    if (signature[w] < signature[u]) {
+                        return -1;
+                    }
+                    if (signature[w] > signature[u]) {
+                        return 1;
+                    }
                 });
 
                 return sigma;
@@ -276,7 +378,9 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                                         diff = true;
                                     }
                                 }
-                                if (diff) num = num + 1;
+                                if (diff) {
+                                    num = num + 1;
+                                }
                                 j = j + 1;
                             }
                         }
@@ -287,7 +391,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                 }
 
 
-                return { pi2: pi2, nb2: num };
+                return {pi2: pi2, nb2: num};
             }
 
 
@@ -306,8 +410,6 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                 return raffine(pi2nb2.pi2, model, pi2nb2.nb2);
             }
         }
-
-
 
 
         function writeContractedVersionAfterRaffinement(piraffined, M) {
@@ -341,8 +443,9 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                     }
                 }
             }
-            if (contracted.getPointedWorldID() == undefined)
+            if (contracted.getPointedWorldID() == undefined) {
                 throw "the contracted model has no pointed world! aïe!";
+            }
 
 
             return contracted; //Retourne un graphe réduit.

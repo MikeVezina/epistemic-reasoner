@@ -1,9 +1,10 @@
+import { environment } from '../environment';
 import { ExplicitEpistemicModel } from '../epistemicmodel/explicit-epistemic-model';
 import { Postcondition } from './postcondition';
 import { TrivialPostcondition } from './trivial-postcondition';
-import { Formula, FormulaFactory } from '../formula/formula';
+import {Formula, FormulaFactory, TrueFormula} from './../formula/formula';
 import { EventModel } from './event-model';
-import { Graph } from '../graph';
+import { Graph } from './../graph';
 import { Event } from './event';
 import { World } from '../epistemicmodel/world';
 
@@ -20,6 +21,11 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
     getPointedAction(): string {
         return this.getPointedNode();
     }
+
+
+    /*	this.nodes = new Array();
+      this.successors = new Array();
+      this.dotstyle = "[shape=box, fillcolor=lightblue2, style=filled]";*/
 
     /**
      * @memberof ActionModel
@@ -43,16 +49,14 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
                 else
                     return "pre: " + this.pre.prettyPrint() + "; post: " + post.toString()
             }
+            // toHTML: function() {return ' <table><tr><td>pre: </td><td>' + formulaPrettyPrint(this.pre) + '</td></tr><tr><td>post: </td><td>' + post.toString() + '</td></tr></table>'}
         });
     }
 
 
-
-
-
     /**
-    @descrption Same specification as addAction.
-    */
+     @descrption Same specification as addAction.
+     */
     addEvent(e, pre, post) {
         this.addAction(e, pre, post)
     }
@@ -105,35 +109,38 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
             let i = we.lastIndexOf("_");
             return we.substring(0, i);
         }
-        /**
-         * @param M epistemic model
-         * @param E action model
-         * @returns the epistemic model that is the product of M and E
-         */
-        function product(M: ExplicitEpistemicModel, E: ExplicitEventModel): ExplicitEpistemicModel {
-            let ME = new ExplicitEpistemicModel();
-            let agents = M.getAgents();
 
+        function filter(M: ExplicitEpistemicModel, E: ExplicitEventModel): ExplicitEpistemicModel {
+            let ME = new ExplicitEpistemicModel();
+            let agents = environment.agents;
+
+            /**
+             * Add all worlds/nodes that match the preconditions of all event nodes.
+             */
             for (let w in M.getNodes())
                 for (let e in E.nodes) {
                     if (M.modelCheck(w, E.getPrecondition(e))) {
                         const we = createWorldActionName(w, e);
-                        const newcontent : World = E.getPostcondition(e).perform(M, w);
+                        const newcontent: World = E.getPostcondition(e).perform(M, w);
                         ME.addWorld(we, newcontent);
                     }
                 }
-
 
 
             for (let w1 in M.getNodes())
                 for (let e1 in E.nodes) {
                     let we1 = createWorldActionName(w1, e1);
                     if (ME.hasNode(we1)) {
+
+                        // For all agents: get successors from current world and event
                         for (let a of agents) {
                             let succw1 = M.getSuccessorsID(w1, a);
                             let succe1 = E.getSuccessorsID(e1, a);
+
+                            // Go through all successors
                             for (let w2 of succw1)
                                 for (let e2 of succe1) {
+
                                     let we2 = createWorldActionName(w2, e2);
                                     if (ME.hasNode(we2)) {
                                         ME.addEdge(a, we1, we2);
@@ -147,27 +154,98 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
             if (M.getPointedWorldID() != undefined && E.getPointedAction() != undefined) {
                 let we = createWorldActionName(M.getPointedWorldID(), E.getPointedAction());
-                if (ME.hasNode(we))
+                if (ME.hasNode(we)) {
                     ME.setPointedWorld(we);
+                    // ME.removeUnvisitedNodes()
+                    // ME.removeUnReachablePartFrom(we);
+                }
                 else
                     throw "cannot be applied!"
             }
 
 
+            console.log("New Pointed World: " + ME.getPointedWorldID());
+            console.log(ME)
+            return ME;
+        }
+
+        /**
+         * @param M epistemic model
+         * @param E action model
+         * @returns the epistemic model that is the product of M and E
+         */
+        function product(M: ExplicitEpistemicModel, E: ExplicitEventModel): ExplicitEpistemicModel {
+            let ME = new ExplicitEpistemicModel();
+            let agents = environment.agents;
+
+            /**
+             * Add all worlds/nodes that match the preconditions of all event nodes.
+             */
+            for (let w in M.getNodes())
+                for (let e in E.nodes) {
+                    if (M.modelCheck(w, E.getPrecondition(e))) {
+                        const we = createWorldActionName(w, e);
+                        const newcontent: World = E.getPostcondition(e).perform(M, w);
+                        ME.addWorld(we, newcontent);
+                    }
+                }
+
+
+            for (let w1 in M.getNodes())
+                for (let e1 in E.nodes) {
+                    let we1 = createWorldActionName(w1, e1);
+                    if (ME.hasNode(we1)) {
+                        // For all agents: get successors from current world and event
+                        for (let a of agents) {
+                            let succw1 = M.getSuccessorsID(w1, a);
+                            let succe1 = E.getSuccessorsID(e1, a);
+
+                            // Go through all successors
+                            for (let w2 of succw1)
+                                for (let e2 of succe1) {
+
+                                    let we2 = createWorldActionName(w2, e2);
+                                    if (ME.hasNode(we2)) {
+                                        ME.addEdge(a, we1, we2);
+                                    }
+                                }
+
+                        }
+                    }
+                }
+
+
+            if (M.getPointedWorldID() != undefined && E.getPointedAction() != undefined) {
+                let we = createWorldActionName(M.getPointedWorldID(), E.getPointedAction());
+                if (ME.hasNode(we)) {
+                    ME.setPointedWorld(we);
+                    // ME.removeUnvisitedNodes()
+                   //ME.removeUnReachablePartFrom(we);
+                }
+                else
+                    throw "cannot be applied!"
+            }
+
+
+            console.log("New Pointed World: " + ME.getPointedWorldID());
+            console.log("Total Nodes: " + ME.getNodesNumber());
             console.log(ME)
             return ME;
 
         }
 
 
-
         return product(M, this);
     }
 
 
-
-
-    static getEventModelPublicAnnouncement(formula: Formula, agents: String[]): ExplicitEventModel {
+    /**
+     * The pre-condition acts as a filter for which worlds this announcement gets applied to.
+     *
+     * @param formula
+     * @param agents
+     */
+    static getEventModelPublicAnnouncement(formula: Formula, agents=environment.agents): ExplicitEventModel {
         let E = new ExplicitEventModel();
         E.addAction("e", formula, new TrivialPostcondition());
 
@@ -183,8 +261,9 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
 
 
-    static getActionModelPrivateAnnouncement(formula: Formula, agent: string, agents: String[]) {
+    static getActionModelPrivateAnnouncement(formula: Formula, agent: string) {
         var E = new ExplicitEventModel();
+
         E.addAction("e", formula, new TrivialPostcondition());
         E.addAction("t", FormulaFactory.createFormula("top"), new TrivialPostcondition());
 
@@ -193,7 +272,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
         E.addEdge(agent, "t", "t");
         E.setPointedAction("e");
 
-        for (let a of agents)
+        for (let a of environment.agents)
             if (a != agent) {
                 E.addEdge(a, "e", "t");
                 E.addEdge(a, "t", "t");
@@ -205,7 +284,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
 
 
-    static getActionModelSemiPrivateAnnouncement(formula: Formula, agent: string, agents: String[]) {
+    static getActionModelSemiPrivateAnnouncement(formula: Formula, agent: string) {
 
         var E = new ExplicitEventModel();
         E.addAction("e", formula, new TrivialPostcondition());
@@ -216,7 +295,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
         E.addEdge(agent, "t", "t");
         E.setPointedAction("e");
 
-        for (let a of agents)
+        for (let a of environment.agents)
             if (a != agent) {
                 E.addEdge(a, "e", "t");
                 E.addEdge(a, "t", "e");

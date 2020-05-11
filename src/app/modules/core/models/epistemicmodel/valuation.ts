@@ -47,4 +47,15 @@ export class Valuation {
   getPropositionMap() : {[p:string]:boolean} {
     return this.propositions;
   }
+
+  getClonedPropositionMap() : {[p:string]:boolean} {
+    let clone: {[p:string]:boolean} = {};
+
+    for (let key of Object.keys(this.propositions))
+    {
+      clone[key] = this.propositions[key];
+    }
+
+    return clone;
+  }
 }
