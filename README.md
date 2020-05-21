@@ -35,12 +35,12 @@ npm start
 All API endpoints are currently defined in `src/app/ApiRouter.ts`. 
 Only the main endpoints will be listed below, please look at ApiRouter.ts for all possible endpoints.
 
-### Creating the Model (POST /api/model)
+## Creating the Model (POST /api/model)
 Creates an initial explicit epistemic model. The only field required is epistemicModel.Worlds. 
 The reasoner will create all necessary edges, propositions, and will choose a random pointed world 
 (unless any of these fields are specified in the request).
  
-#### *Request*
+### *Request*
 The following is the format of the input:
 
 ```
@@ -77,19 +77,19 @@ Action := {
 }
 ```
 
-#### *Response*
+### *Response*
 There is no response content for this endpoint.
 200 OK => Model Created. 
 
-### Evaluate Formula (GET /api/evaluate)
+## Evaluate Formula (GET /api/evaluate)
 Evaluates a given formula and returns the evaluated result.
-#### *Request*
+### *Request*
 The request input is provided as a query parameter: `formula`.
 To evaluate the formula `(k a (k a m_1))`, the request looks as follows:
 `http://host:port/api/evaluate?formula=(k a (k a m_1))`. You may need to URI encode
 the formula before passing it as the query parameter value. 
 
-#### *Response*
+### *Response*
 The endpoint will return the result of the formula 
 (true if the formula evaluated to true in the current pointed world, false otherwise).
 The following is the format of the response content:
@@ -99,13 +99,13 @@ The following is the format of the response content:
 }
 ```
 
-### Updating Agent Propositions (PUT /api/props)
+## Updating Agent Propositions (PUT /api/props)
 This endpoint is used by the epistemic agents (linked above). 
 They call this endpoint with their current beliefs (translated to their corresponding propositions).
 This endpoint obtains the initial model and utilizes the request props to 
 update the model edges and pointed world to properly denote which world the agent may currently be in.
    
-#### *Request*
+### *Request*
 The input accepts a JSON object containing a mapping of proposition truth values, or an array of true propositions. 
 The following are example inputs that are equivalent to each other:
 ```
@@ -117,7 +117,7 @@ The following are example inputs that are equivalent to each other:
 
 ```["m_1", "m_2"]```
 
-#### *Response*
+### *Response*
 The response contains a success boolean, and a result array.
 Result contains an array of propositions that can now be inferred after the proposition update. 
 This array does not contain the props explicitly passed in the request object.
