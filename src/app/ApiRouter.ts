@@ -239,7 +239,7 @@ export class ApiRouter {
          * Update the current world valuation.
          *
          * Input: { [id: string]: boolean } | string[]
-         * Output: { result: boolean }
+         * Output: { success: boolean }
          */
         app.put('/api/props', async function(req, res) {
             let propValues: { [id: string]: boolean } | string[] = req.body || [];
@@ -247,9 +247,20 @@ export class ApiRouter {
 
             let {success, result} = await curEnvironment.updateModel(valuation);
 
+            // Get any props/knowledge that can be inferred by the world successors
+            let inferredProps = result.obtainKnowledge(CustomDescription.DEFAULT_AGENT).getPropositionMap();
+            let originalProps = valuation.getPropositionMap();
+
+            // Remove any props that were passed in as input.
+            for (let prop of Object.keys(inferredProps))
+            {
+                if(inferredProps[prop] === originalProps[prop])
+                    delete inferredProps[prop];
+            }
+
             res.send({
                 success,
-                result: result.getPointedWorld()
+                result: inferredProps
             });
             res.end();
         });
