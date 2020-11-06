@@ -1,4 +1,6 @@
-# Epistemic Reasoner API (Node.js)
+# Epistemic Reasoning as a Service
+
+## Epistemic Reasoner API (Node.js)
 This is a fork of [hintikkasworld](https://gitlab.inria.fr/fschwarz/hintikkasworld) that provides a simple API for 
 creating, updating, and reasoning about Explicit Epistemic models.
 
