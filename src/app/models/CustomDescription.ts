@@ -7,6 +7,7 @@ import {ExplicitEventModel} from '../modules/core/models/eventmodel/explicit-eve
 import {Valuation} from '../modules/core/models/epistemicmodel/valuation';
 import {CustomWorld} from './CustomWorld';
 import {ExplicitFilterEventModel} from '../modules/core/models/eventmodel/explicit-filter-event-model';
+import {WorldValuation} from '../modules/core/models/epistemicmodel/world-valuation';
 
 export class CustomDescription extends ExampleDescription {
 
@@ -54,7 +55,17 @@ export class CustomDescription extends ExampleDescription {
      */
     constructor(data: any) {
         super();
+
         this.rawData = data;
+
+        // If we are importing from serialized description
+        if (data.rawData)
+        {
+            this.rawData = data.rawData;
+            this.initialModel = this.loadModel(data);
+        }
+
+
 
         // Optional Name
         this.name = data.name || 'DefaultName';
@@ -69,6 +80,19 @@ export class CustomDescription extends ExampleDescription {
 
     }
 
+
+    private loadModel(data: any) : ExplicitEpistemicModel {
+
+        // Load initial model directly.
+        let curModel = new ExplicitEpistemicModel();
+        let oldModel = data.initialModel;
+
+        curModel.setNodes(oldModel.nodes);
+        curModel.setSuccessors(oldModel.successors);
+        curModel.setPointedNode(oldModel.pointed);
+
+        return curModel;
+    }
 
     /**
      * Used to generate the list of propositions if they are not explicitly provided in the raw data. Iterates through all worlds and adds propositions to a set.
@@ -93,10 +117,10 @@ export class CustomDescription extends ExampleDescription {
         return this.atomicPropositions;
     }
 
+
     getDescription(): string[] {
         return [];
     }
-
 
     getInitialEpistemicModel(): ExplicitEpistemicModel {
         return this.parseModel();
@@ -133,12 +157,15 @@ export class CustomDescription extends ExampleDescription {
         return this.rawData.initialModel;
     }
 
+
     private getRawWorlds() {
         return this.getRawModel().worlds;
     }
 
-
     private parseModel(): ExplicitEpistemicModel {
+        if (this.initialModel)
+            return this.initialModel;
+
         let {worlds, edges, pointedWorld} = this.getRawModel();
         let epistemicModel = new ExplicitEpistemicModel();
 
@@ -153,14 +180,21 @@ export class CustomDescription extends ExampleDescription {
             }
         } else {
             // Add edges to all nodes
-            epistemicModel.addEdgeIf(CustomDescription.DEFAULT_AGENT, (() => true));
+
+            epistemicModel.bulkAddEdges(CustomDescription.DEFAULT_AGENT);
         }
 
 
         // No initial props?
         // todo add initial props?
         let initialProps = [];
-        epistemicModel.setPointedWorld(pointedWorld || initialProps);
+        if (pointedWorld)
+            epistemicModel.setPointedWorld(pointedWorld);
+        else
+        {
+            let update = ExplicitEpistemicModel.createUpdateFormula([]);
+            epistemicModel.setPointedWorld(update);
+        }
 
         return epistemicModel;
     }

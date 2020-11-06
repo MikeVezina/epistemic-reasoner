@@ -128,14 +128,12 @@ export class Graph {
      * @param agent, an agent (label)
      * @returns an array of all successors of node via the agent
      * */
-    getSuccessorsID(node, agent) {
+    getSuccessorsID(node, agent): Array<string> {
         if (this.nodes[node] == undefined) throw ("getSuccessors : There is no source node of ID " + node);
-        if (this.successors[agent] == undefined)
-            return new Array();
-        else if (this.successors[agent][node] == undefined)
-            return new Array();
-        else
-            return this.successors[agent][node];
+        if (this.successors[agent] == undefined || this.successors[agent][node] == undefined)
+            return [];
+        // Convert set to array
+        return Array.from(Object.keys(this.successors[agent][node]));
     }
 
 
@@ -281,30 +279,47 @@ export class Graph {
         if (idnode in this.nodes) return true;
         return false;
     }
+    bulkAddEdges(agent)
+    {
+        if (this.successors[agent] == undefined)
+            this.successors[agent] = {};
 
-    /**
-    @param agent
-    @param idsource ID of the source node
-    @param iddestination ID of the destination node
-    @pre we suppose that the edge (idsource agent iddestination) is not in the graph
-    @description Add an edge from idsource to iddestination labelled by agent
-    @example G.addEdge("a", "w", "u")
-    */
-    addEdge(agent, idsource, iddestination) {
+        let nodeNames = Object.keys(this.nodes);
+        let progressEdges = 0;
+        let total = nodeNames.length * nodeNames.length;
+
+        for (let source of nodeNames)
+        {
+            if(progressEdges % 1000 === 0)
+                console.log("Created edges: " + progressEdges + "/" + total + "(" + (progressEdges/total*100).toFixed(2) + "%)");
+
+            progressEdges += nodeNames.length;
+
+            let srcEdges = this.successors[agent][source] = this.successors[agent][source] || {};
+            for (let name of nodeNames)
+                srcEdges[name] = name;
+        }
+        if (total % 1000 !== 0)
+            console.log("Created edges: " + total + "/" + total);
+    }
+
+       /**
+         * Adds an edge without checking if it already exists.
+         * this is hacky. Should change successors to use map/set instead of array
+         */
+        addEdge(agent, idsource, iddestination) {
          if (this.nodes[idsource] == undefined) throw ("There is no source node of ID " + idsource);
         if (this.nodes[iddestination] == undefined) throw ("There is no destination node of ID " + iddestination);
 
         if (this.successors[agent] == undefined)
             this.successors[agent] = {};
 
-        if (this.successors[agent][idsource] == undefined)
-            this.successors[agent][idsource] = new Array();
+        this.successors[agent][idsource] = this.successors[agent][idsource] || {};
 
+        let edges = this.successors[agent][idsource];
 
-        if (this.successors[agent][idsource].indexOf(iddestination) < 0)
-            this.successors[agent][idsource].push(iddestination);
-
-
+        if (!edges[iddestination])
+            edges[iddestination] = iddestination;
     }
 
 

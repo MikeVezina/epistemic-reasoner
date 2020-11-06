@@ -37,7 +37,7 @@ export class CustomEnvironment extends Environment {
         return await this.getEpistemicModel().check(<Formula> formula);
     }
 
-    async updateModel(props: Valuation, agent: string=CustomDescription.DEFAULT_AGENT): Promise<{success: Boolean, result: ExplicitEpistemicModel}> {
+    async updateModel(props: Formula, agent: string=CustomDescription.DEFAULT_AGENT): Promise<{success: Boolean, result: ExplicitEpistemicModel}> {
         let initModel = this.customDesc.getInitialEpistemicModel();
 
         let event = ExplicitFilterEventModel.getActionModelNewInformation(initModel, props, agent);

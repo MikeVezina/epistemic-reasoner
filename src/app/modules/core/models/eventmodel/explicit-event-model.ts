@@ -229,7 +229,8 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
 
             console.log("New Pointed World: " + ME.getPointedWorldID());
             console.log("Total Nodes: " + ME.getNodesNumber());
-            console.log(ME)
+            console.log("Total Edges: " + ME.getNumberEdges());
+            //console.log(ME)
             return ME;
 
         }

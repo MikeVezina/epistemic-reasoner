@@ -7,6 +7,8 @@ import {World} from './world';
 import {SuccessorSet} from './successor-set';
 import {Valuation} from './valuation';
 import {WorldValuation} from './world-valuation';
+import {CustomWorld} from '../../../../models/CustomWorld';
+import {AndFormula, AtomicFormula, Formula, NotFormula, OrFormula, TrueFormula} from '../formula/formula';
 
 export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     isLoadedObservable(): BehaviorSubject<boolean> {
@@ -29,9 +31,23 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     getSuccessors(w: World, a: string): SuccessorSet {
         let successorIDs = this.getSuccessorsID(this.nodeToID.get(w), a);
         console.log(a + '-successors of ' + this.nodeToID.get(w) + ': ' + successorIDs);
-        return new ExplicitSuccessorSet(successorIDs.map((id) => this.getNode(id)));
+        return new ExplicitSuccessorSet(successorIDs.map((id) => <World> this.getNode(id)));
     }
 
+
+    getNumberWorlds(): Number {
+        return Object.keys(this.nodes).length;
+    }
+
+    getNumberEdges(): Number {
+        let countEdges = 0;
+        for (let agent of Object.keys(this.successors)) {
+            for (let world of Object.keys(this.successors[agent])) {
+                countEdges += Object.keys(this.successors[agent][world]).length;
+            }
+        }
+        return countEdges;
+    }
 
     /**
      * Evaluates a valuation in a given world. Returns true if the propositions in the valuation matches the values in the specified world. Also returns true
@@ -60,15 +76,64 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
         return true;
     }
 
+    public static createUpdateFormula(propValues: [{ [id: string]: boolean }] | []): Formula {
+        // Create AND (with true formula, just in case no other prop values)
+        let fullFormula = new AndFormula([new TrueFormula()]);
+
+        for (let nextFormula of propValues) {
+            if (Object.keys(nextFormula).length === 0) {
+                continue;
+            }
+
+            let valuation = new Valuation(nextFormula);
+            let valuationFormulas = this.getValuationAtomicFormulas(valuation);
+
+            fullFormula.formulas.push(new OrFormula(valuationFormulas));
+        }
+
+        return fullFormula;
+    }
+
+
+    /**
+     * Creates an array of atomic formulas from a valuation. i.e. if valuation = {p: true, q: false} then the formula will be:
+     * And(p, Not(q)). If no propositions exist in the valuation, a TrueFormula will be returned.
+     * @param propEval
+     */
+    public static getValuationAtomicFormulas(propEval: Valuation): Formula[] {
+        // Create array of atomic props
+        let atomicProps: Formula[] = [];
+
+        let propMap = propEval.getPropositionMap();
+
+        if (!propMap || Object.keys(propMap).length == 0) {
+            atomicProps.push(new TrueFormula());
+            return atomicProps;
+        }
+
+        for (let propKey of Object.keys(propMap)) {
+            // Whether or not the prop should be true/false
+            let propVal = propMap[propKey];
+
+            let atomicFormula: Formula = new AtomicFormula(propKey);
+
+            // If prop valuation is false, wrap with the Not formula.
+            if (!propVal) {
+                atomicFormula = new NotFormula(atomicFormula);
+            }
+
+            atomicProps.push(atomicFormula);
+        }
+
+        return atomicProps;
+    }
+
     /**
      @param w ID of a node
      @example M.setPointedWorld("w")
      **/
-    setPointedWorld(w: String | Valuation) {
+    setPointedWorld(w: String | Formula) {
 
-        if (w instanceof Valuation) {
-            w = <String> this.findPointedWorld(w);
-        }
 
         if (w instanceof String || typeof w === 'string') {
             if (this.nodes[<string> w] == undefined) {
@@ -76,24 +141,27 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
             }
 
             this.setPointedNode(w);
+            return;
         }
 
-
+        // If w is a formula
+        // Recurse to trigger string case above
+        this.setPointedWorld(<String> this.findPointedWorld(w));
     }
 
-    hasPossibleWorld(props: Valuation): boolean {
+    hasPossibleWorld(props: Formula): boolean {
         return this.findPointedWorld(props) !== undefined;
     }
 
-    private findPointedWorld(props: Valuation): String {
-        if (this.getPointedWorldID() && ExplicitEpistemicModel.evalAllProps(this.getPointedWorld(), props)) {
+    private findPointedWorld(props: Formula): String {
+        if (this.getPointedWorldID() && this.modelCheck(this.getPointedWorldID(), props)) {
             return this.getPointedWorldID();
         }
 
         for (let nodesKey in this.nodes) {
             let node: World = <World> this.nodes[nodesKey];
 
-            if (ExplicitEpistemicModel.evalAllProps(node, props)) {
+            if (this.modelCheck(nodesKey, props)) {
                 return nodesKey;
             }
 
@@ -123,12 +191,12 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
      * */
     addWorld(w: string, content: World) {
         this.addNode(w, content);
-        console.log('world of id ' + w + ' is added');
+        // console.log('world of id ' + w + ' is added');
         if (this.nodeToID.has(content)) {
             throw 'World ' + w + ' already exists.';
         }
         this.nodeToID.set(content, w);
-        console.log('nodeToID contains ' + this.nodeToID.size + ' elements');
+        // console.log('nodeToID contains ' + this.nodeToID.size + ' elements');
     }
 
 
@@ -153,10 +221,11 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
      * @param w
      * @param agent
      */
-    obtainKnowledge(agent: string, w: string=this.getPointedWorldID()): Valuation {
+    obtainKnowledge(agent: string, w: string = this.getPointedWorldID()): Valuation {
 
-        if (this.nodes[w] === undefined)
+        if (this.nodes[w] === undefined) {
             throw 'world does not exist ' + w;
+        }
 
         // Get current world valuation map {prop -> Boolean}
         let valuationMap: { [p: string]: boolean } = (<WorldValuation> this.nodes[w]).valuation.getClonedPropositionMap();
@@ -167,11 +236,11 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                 let succNode: WorldValuation = <WorldValuation> this.nodes[succ];
 
                 // Remove any proposition valuations that do not match the successors.
-                for (let prop of Object.keys(valuationMap))
-                {
+                for (let prop of Object.keys(valuationMap)) {
                     let val = valuationMap[prop];
-                    if (succNode.modelCheck(prop) !== val)
+                    if (succNode.modelCheck(prop) !== val) {
                         delete valuationMap[prop];
+                    }
 
                 }
             });
@@ -444,7 +513,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
                 }
             }
             if (contracted.getPointedWorldID() == undefined) {
-                throw "the contracted model has no pointed world! aïe!";
+                throw 'the contracted model has no pointed world! aïe!';
             }
 
 
@@ -464,4 +533,17 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     }
 
 
+    setSuccessors(successors: { [key: string]: any; }) {
+        this.successors = successors;
+    }
+
+    setNodes(nodes: any) {
+        this.nodes = {};
+        this.nodeToID = new Map<World, string>();
+
+        for (let node of Object.keys(nodes)) {
+            let world = new CustomWorld(new Valuation(nodes[node].valuation.propositions));
+            this.addWorld(node, world);
+        }
+    }
 }

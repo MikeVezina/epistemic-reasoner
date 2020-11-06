@@ -10,7 +10,9 @@ import cors from 'cors';
 const express = require('express');
 const app = express();
 
-app.use(express.json());
+app.use(express.json({
+    limit: '500mb'
+}));
 app.use(cors())
 
 

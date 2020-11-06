@@ -2,8 +2,19 @@ import * as express from 'express';
 import {CustomDescription} from './models/CustomDescription';
 import {CustomEnvironment} from './models/CustomEnvironment';
 import {Valuation} from './modules/core/models/epistemicmodel/valuation';
-import {AtomicFormula, KFormula, KposFormula, NotFormula} from './modules/core/models/formula/formula';
-
+import {
+    AndFormula,
+    AtomicFormula,
+    Formula,
+    FormulaFactory,
+    KFormula,
+    KposFormula,
+    NotFormula, OrFormula,
+    TrueFormula
+} from './modules/core/models/formula/formula';
+import {fromPromise} from 'rxjs/internal-compatibility';
+import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
+import fs from 'fs';
 
 function createRaw(): object {
     return {
@@ -175,7 +186,29 @@ export class ApiRouter {
         // Lets just initialize curEnvironment for now...
         let rawData = createRaw();
         curEnvironment = new CustomEnvironment(new CustomDescription(rawData));
-        curEnvironment.getEpistemicModel().setPointedWorld(new Valuation([]));
+        curEnvironment.getEpistemicModel().setPointedWorld(ExplicitEpistemicModel.createUpdateFormula([]));
+
+        const file = "desc_cache.json";
+        let descCache = {};
+
+       if (!fs.existsSync(file))
+            fs.writeFileSync(file, "{}");
+
+       // var test = fs.readFileSync(file, 'utf-8');
+
+        let descCacheObj = JSON.parse("{}");
+        for (let key of Object.keys(descCacheObj))
+        {
+            console.log("Loading model from cache: ");
+            let val = new CustomDescription(descCacheObj[key]);
+            descCache[key] = val;
+            console.log("Worlds: " + val.getInitialEpistemicModel().getNumberWorlds());
+            console.log("Edges: " + val.getInitialEpistemicModel().getNumberEdges());
+            console.log("Pointed: " + val.getInitialEpistemicModel().getPointedWorldID());
+
+        }
+
+        console.log(Object.keys(descCache).length + " loaded into cache.");
 
         /**
          * POST /api/world
@@ -187,16 +220,50 @@ export class ApiRouter {
          * Output: None.
          */
         app.post('/api/model', async function(req, res: express.Response) {
+
             let data = req.body;
             let props = req.body.props || [];
+            let dataString = JSON.stringify(req.body);
 
+            console.log("Creating new model with " + req.body.initialModel.worlds.length + " worlds");
+
+            let start = Date.now();
+
+            let isCached = descCache[dataString] !== undefined;
+
+            // Create and Place in cache.
+            // let curDescription = descCache[dataString] || new CustomDescription(data);
             let curDescription = new CustomDescription(data);
+            descCache[dataString] = curDescription;
+
+            // Create Description end time
+            let descEnd = Date.now();
+
             curEnvironment = new CustomEnvironment(curDescription);
+            let envEnd = Date.now();
 
             // Set the pointed world
-            let valuation = new Valuation(props);
+            let valuation = ExplicitEpistemicModel.createUpdateFormula(props);
             curEnvironment.getEpistemicModel().setPointedWorld(valuation);
+            let valuationEnd = Date.now();
 
+            console.log("");
+            console.log("Model Metrics:")
+            console.log("------- -------");
+            console.log("Cached: " + isCached)
+            console.log("Create Desc. Time: " + (descEnd - start));
+            console.log("Create Env. Time: " + (envEnd - descEnd));
+            console.log("Pointed World Time: " + (valuationEnd - envEnd));
+            console.log("Total Time: " + (valuationEnd - start));
+            console.log("------- -------");
+            console.log("Worlds: " + curEnvironment.getEpistemicModel().getNumberWorlds());
+            console.log("Edges: " + curEnvironment.getEpistemicModel().getNumberEdges());
+            console.log("Pointed: " + curEnvironment.getEpistemicModel().getPointedWorldID());
+            console.log("======= =======");
+
+            // Write to cache
+            if (!isCached)
+                fs.writeFileSync(file, JSON.stringify(descCache));
             res.end();
         });
 
@@ -224,35 +291,22 @@ export class ApiRouter {
          * Input: { formula: String }
          * Output: { result: boolean }
          */
-        app.get('/api/evaluate', async function(req, res) {
+        app.post('/api/evaluate', async function(req, res) {
             if (!curEnvironment) {
                 return res.send({error: 'No Environment.'});
             }
 
-            let formula = req.query.formula || '';
-            let result = await curEnvironment.modelCheckFormula(formula);
-            await curEnvironment.getEpistemicModel().obtainKnowledge(CustomDescription.DEFAULT_AGENT);
+            let formulas = req.body.formulas || '';
+            let currentModel = curEnvironment.getEpistemicModel();
 
-            res.send({result});
+            let formulaResults = evaluateFormulas(formulas, currentModel);
+
+            res.send({
+                result: formulaResults
+            });
+
         });
 
-        /**
-         *
-         */
-        app.post('/api/evaluateFormula', async function(req, res) {
-            if (!curEnvironment) {
-                return res.send({error: 'No Environment.'});
-            }
-
-            let formula = req.body || '';
-
-
-            let parsedFormula = parseFormulaObject(formula);
-
-            let result = await curEnvironment.modelCheckFormula(parsedFormula);
-
-            res.send({result});
-        });
 
 
         /**
@@ -262,29 +316,18 @@ export class ApiRouter {
          * Output: { success: boolean }
          */
         app.put('/api/props', async function(req, res) {
-            let propValues: { [id: string]: boolean } | string[] = req.body.props || [];
-            let valuation: Valuation = new Valuation(propValues);
-
-            let {success, result} = await curEnvironment.updateModel(valuation);
+            let propValues: [{ [id: string]: boolean }] = req.body.props || [];
+            // Convert BB update to formula
+            let propFormula = ExplicitEpistemicModel.createUpdateFormula(propValues);
+            
+            let {success, result} = await curEnvironment.updateModel(propFormula);
             let formulaResults: any = {};
 
-            if (success && req.body.formulas) {
-                for (let formula of req.body.formulas) {
-                    let parsedFormula = parseFormulaObject(formula);
-                    formulaResults[formula.id] = result.modelCheck(result.getPointedWorldID(), parsedFormula);
-                }
+            // Evaluate formulas if they are provided
+            if (req.body.formulas) {
+                formulaResults = evaluateFormulas(req.body.formulas, result);
             }
 
-            // Get any props/knowledge that can be inferred by the world successors
-            let inferredProps = result.obtainKnowledge(CustomDescription.DEFAULT_AGENT).getPropositionMap();
-            let originalProps = valuation.getPropositionMap();
-
-            // Remove any props that were passed in as input.
-            for (let prop of Object.keys(inferredProps)) {
-                if (inferredProps[prop] === originalProps[prop]) {
-                    delete inferredProps[prop];
-                }
-            }
 
             res.send({
                 success,
@@ -293,6 +336,28 @@ export class ApiRouter {
             res.end();
         });
 
+
+        function evaluateFormulas(formulas: any[] | any, model: ExplicitEpistemicModel): { [id: number]: boolean } {
+            let formulaResults: { [id: number]: boolean } = {};
+
+            if (formulas === undefined) {
+                return formulaResults;
+            }
+
+            if (!(formulas instanceof Array)) {
+                formulas = [formulas];
+            }
+
+            for (let formula of formulas) {
+                let parsedFormula = parseFormulaObject(formula);
+                if (formulaResults[formula.id] !== undefined) {
+                    console.warn("formula with id " + formula.id + " was already evaluated (possible duplicate formula): " + parsedFormula.prettyPrint());
+                }
+                formulaResults[formula.id] = model.modelCheck(model.getPointedWorldID(), parsedFormula);
+            }
+
+            return formulaResults;
+        }
 
         function parseFormulaObject(formula: any) {
             if (!formula) {
@@ -306,6 +371,8 @@ export class ApiRouter {
             // Nested formula (returns undefined if there is no inner formula)
             let innerFormula = parseFormulaObject(formula.inner);
             let returnObject;
+
+
 
             if (type === 'knows' || type === 'know' || type === 'k') {
                 returnObject = new KFormula(agent, innerFormula);
