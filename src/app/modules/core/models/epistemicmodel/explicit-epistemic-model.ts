@@ -1,4 +1,3 @@
-import {BehaviorSubject} from 'rxjs';
 import {ExplicitSuccessorSet} from './explicit-successor-set';
 import * as types from './../formula/formula';
 import {Graph} from '../graph';
@@ -11,10 +10,6 @@ import {CustomWorld} from '../../../../models/CustomWorld';
 import {AndFormula, AtomicFormula, Formula, NotFormula, OrFormula, TrueFormula} from '../formula/formula';
 
 export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
-    isLoadedObservable(): BehaviorSubject<boolean> {
-        let isLoaded$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
-        return isLoaded$;
-    }
 
     isLoaded(): boolean {
         return true;

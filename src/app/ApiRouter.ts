@@ -12,7 +12,6 @@ import {
     NotFormula, OrFormula,
     TrueFormula
 } from './modules/core/models/formula/formula';
-import {fromPromise} from 'rxjs/internal-compatibility';
 import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
 import fs from 'fs';
 
