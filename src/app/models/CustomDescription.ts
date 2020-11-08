@@ -59,12 +59,10 @@ export class CustomDescription extends ExampleDescription {
         this.rawData = data;
 
         // If we are importing from serialized description
-        if (data.rawData)
-        {
+        if (data.rawData) {
             this.rawData = data.rawData;
             this.initialModel = this.loadModel(data);
         }
-
 
 
         // Optional Name
@@ -73,7 +71,7 @@ export class CustomDescription extends ExampleDescription {
         // Optional propositions
         this.atomicPropositions = data.propositions || this.generatePropositions();
 
-        this.initialModel = this.parseModel()
+        this.initialModel = this.parseModel();
 
         // Parse the actions
         this.parseActions(data.actions);
@@ -81,7 +79,7 @@ export class CustomDescription extends ExampleDescription {
     }
 
 
-    private loadModel(data: any) : ExplicitEpistemicModel {
+    private loadModel(data: any): ExplicitEpistemicModel {
 
         // Load initial model directly.
         let curModel = new ExplicitEpistemicModel();
@@ -190,8 +188,7 @@ export class CustomDescription extends ExampleDescription {
         let initialProps = [];
         if (pointedWorld)
             epistemicModel.setPointedWorld(pointedWorld);
-        else
-        {
+        else {
             let update = ExplicitEpistemicModel.createUpdateFormula([]);
             epistemicModel.setPointedWorld(update);
         }

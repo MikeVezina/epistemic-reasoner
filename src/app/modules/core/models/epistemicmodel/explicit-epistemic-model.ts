@@ -129,6 +129,8 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
      **/
     setPointedWorld(w: String | Formula) {
 
+        if (w === undefined)
+            throw ('could not find undefined world: ' + w);
 
         if (w instanceof String || typeof w === 'string') {
             if (this.nodes[<string> w] == undefined) {
