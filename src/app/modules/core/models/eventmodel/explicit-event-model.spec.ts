@@ -1,4 +1,4 @@
-import { ExplicitEventModel } from './explicit-event-model';
+import {ExplicitEventModel} from './explicit-event-model';
 
 describe('ExplicitEventModel', () => {
   it('should create an instance', () => {

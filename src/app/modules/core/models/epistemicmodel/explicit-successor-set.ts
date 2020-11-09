@@ -1,5 +1,5 @@
-import { SuccessorSet } from './successor-set';
-import { World } from './world';
+import {SuccessorSet} from './successor-set';
+import {World} from './world';
 
 export class ExplicitSuccessorSet implements SuccessorSet {
 

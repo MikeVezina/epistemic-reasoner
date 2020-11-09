@@ -1,4 +1,4 @@
-import { Scheme } from './scheme';
+import {Scheme} from './scheme';
 
 describe('Scheme', () => {
   it('should create an instance', () => {

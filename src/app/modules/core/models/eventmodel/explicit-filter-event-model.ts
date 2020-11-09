@@ -1,11 +1,7 @@
 import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model';
 
-import {
-    AndFormula, AtomicFormula, Formula,
-    NotFormula, OrFormula, TrueFormula
-} from '../formula/formula';
+import {Formula, NotFormula} from '../formula/formula';
 import {ExplicitEventModel} from './explicit-event-model';
-import {Valuation} from '../epistemicmodel/valuation';
 
 export class ExplicitFilterEventModel extends ExplicitEventModel {
 

@@ -3,8 +3,6 @@ import {CustomDescription} from './CustomDescription';
 import {Formula} from '../modules/core/models/epistemicmodel/formula';
 import {FormulaFactory} from '../modules/core/models/formula/formula';
 import {ExplicitFilterEventModel} from '../modules/core/models/eventmodel/explicit-filter-event-model';
-import {createSocket} from 'dgram';
-import {Valuation} from '../modules/core/models/epistemicmodel/valuation';
 import {ExplicitEpistemicModel} from '../modules/core/models/epistemicmodel/explicit-epistemic-model';
 
 export class CustomEnvironment extends Environment {

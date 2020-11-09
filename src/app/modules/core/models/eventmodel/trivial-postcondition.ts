@@ -1,5 +1,5 @@
-import { ExplicitEpistemicModel } from '../epistemicmodel/explicit-epistemic-model';
-import { Postcondition } from './postcondition';
+import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model';
+import {Postcondition} from './postcondition';
 
 export class TrivialPostcondition implements Postcondition {
     perform(M: ExplicitEpistemicModel, w) {

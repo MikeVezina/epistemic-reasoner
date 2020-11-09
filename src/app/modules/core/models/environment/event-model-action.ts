@@ -1,6 +1,6 @@
-import { EpistemicModel } from '../epistemicmodel/epistemic-model';
-import { Action } from './action';
-import { EventModel } from '../eventmodel/event-model';
+import {EpistemicModel} from '../epistemicmodel/epistemic-model';
+import {Action} from './action';
+import {EventModel} from '../eventmodel/event-model';
 
 export class EventModelAction implements Action {
     _E: EventModel<any>;

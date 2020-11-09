@@ -1,17 +1,7 @@
 import * as express from 'express';
 import {CustomDescription} from './models/CustomDescription';
 import {CustomEnvironment} from './models/CustomEnvironment';
-import {Valuation} from './modules/core/models/epistemicmodel/valuation';
-import {
-    AndFormula,
-    AtomicFormula,
-    Formula,
-    FormulaFactory,
-    KFormula,
-    KposFormula,
-    NotFormula, OrFormula,
-    TrueFormula
-} from './modules/core/models/formula/formula';
+import {AtomicFormula, KFormula, KposFormula, NotFormula} from './modules/core/models/formula/formula';
 import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
 import fs from 'fs';
 

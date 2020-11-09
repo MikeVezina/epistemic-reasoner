@@ -1,13 +1,10 @@
 import {ExampleDescription} from '../modules/core/models/environment/exampledescription';
 import {EventModelAction} from '../modules/core/models/environment/event-model-action';
 import {ExplicitEpistemicModel} from '../modules/core/models/epistemicmodel/explicit-epistemic-model';
-import {EpistemicModel} from '../modules/core/models/epistemicmodel/epistemic-model';
 import {FormulaFactory} from '../modules/core/models/formula/formula';
 import {ExplicitEventModel} from '../modules/core/models/eventmodel/explicit-event-model';
 import {Valuation} from '../modules/core/models/epistemicmodel/valuation';
 import {CustomWorld} from './CustomWorld';
-import {ExplicitFilterEventModel} from '../modules/core/models/eventmodel/explicit-filter-event-model';
-import {WorldValuation} from '../modules/core/models/epistemicmodel/world-valuation';
 
 export class CustomDescription extends ExampleDescription {
 

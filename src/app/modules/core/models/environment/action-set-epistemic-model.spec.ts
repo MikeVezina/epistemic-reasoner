@@ -1,4 +1,4 @@
-import { ActionSetEpistemicModel } from './action-set-epistemic-model';
+import {ActionSetEpistemicModel} from './action-set-epistemic-model';
 
 describe('ActionSetEpistemicModel', () => {
   it('should create an instance', () => {

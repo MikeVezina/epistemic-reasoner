@@ -1,5 +1,5 @@
-import * as types from '../formula/formula'
-import { ExplicitEpistemicModel } from './explicit-epistemic-model';
+import * as types from '../formula/formula';
+import {ExplicitEpistemicModel} from './explicit-epistemic-model';
 import {MuddyChildren} from '../examples/muddy-children';
 
 describe('ExplicitEpistemicModel', () => {

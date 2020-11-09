@@ -1,4 +1,4 @@
-import { Graph } from './graph';
+import {Graph} from './graph';
 
 describe('Graph', () => {
   it('should create an instance', () => {

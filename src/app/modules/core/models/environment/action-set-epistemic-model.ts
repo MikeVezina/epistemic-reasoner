@@ -1,5 +1,5 @@
-import { EpistemicModel } from '../epistemicmodel/epistemic-model';
-import { Action } from './action';
+import {EpistemicModel} from '../epistemicmodel/epistemic-model';
+import {Action} from './action';
 
 export class ActionSetEpistemicModel implements Action {
     name: string;

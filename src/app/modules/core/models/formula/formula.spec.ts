@@ -1,4 +1,4 @@
-import {Formula, AtomicFormula, OrFormula, FormulaFactory} from './formula';
+import {AtomicFormula, Formula, FormulaFactory, OrFormula} from './formula';
 
 describe('Formula', () => {
 

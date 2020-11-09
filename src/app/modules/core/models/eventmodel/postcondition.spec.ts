@@ -1,6 +1,6 @@
-import { WorldValuation } from '../epistemicmodel/world-valuation';
-import { Valuation } from '../epistemicmodel/valuation';
-import { Postcondition } from './postcondition';
+import {WorldValuation} from '../epistemicmodel/world-valuation';
+import {Valuation} from '../epistemicmodel/valuation';
+import {Postcondition} from './postcondition';
 
 describe('Postcondition', () => {
   

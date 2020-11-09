@@ -1,5 +1,4 @@
 import {ApiRouter} from './ApiRouter';
-import {createSocket} from 'dgram';
 
 const POST = 'post';
 

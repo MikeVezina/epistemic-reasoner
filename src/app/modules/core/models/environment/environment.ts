@@ -1,6 +1,6 @@
-import { Action } from './action';
-import { ExampleDescription } from './exampledescription';
-import { EpistemicModel } from '../epistemicmodel/epistemic-model';
+import {Action} from './action';
+import {ExampleDescription} from './exampledescription';
+import {EpistemicModel} from '../epistemicmodel/epistemic-model';
 import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model';
 
 export class Environment {

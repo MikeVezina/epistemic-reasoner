@@ -1,4 +1,4 @@
-import { Environment } from './environment';
+import {Environment} from './environment';
 import {AcesAndEights} from '../examples/aces-and-eights';
 
 describe('Environment', () => {

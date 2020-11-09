@@ -1,4 +1,4 @@
-import { MuddyChildren } from './muddy-children';
+import {MuddyChildren} from './muddy-children';
 
 describe('MuddyChildren', () => {
   it('should create an instance', () => {

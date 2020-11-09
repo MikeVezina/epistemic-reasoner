@@ -1,4 +1,4 @@
-import { Scheme } from './scheme';
+import {Scheme} from './scheme';
 
 export interface Formula {
     isBoolean(): boolean;

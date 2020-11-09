@@ -1,4 +1,4 @@
-import { EpistemicModel } from '../epistemicmodel/epistemic-model';
+import {EpistemicModel} from '../epistemicmodel/epistemic-model';
 import extend from 'extend';
 
 export abstract class Postcondition {

@@ -1,6 +1,6 @@
-import { SuccessorSet } from './successor-set';
-import { Formula } from '../formula/formula';
-import { World } from './world';
+import {SuccessorSet} from './successor-set';
+import {Formula} from '../formula/formula';
+import {World} from './world';
 
 /**
  * An EpistemicModel is an interface used by the GUI. The implementation may be an explicit graph or

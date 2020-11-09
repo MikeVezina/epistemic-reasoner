@@ -1,4 +1,4 @@
-import { EventModelAction } from './event-model-action';
+import {EventModelAction} from './event-model-action';
 
 describe('EventModelAction', () => {
   it('should create an instance', () => {

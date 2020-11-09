@@ -1,5 +1,5 @@
-import { Valuation } from './valuation';
-import { World } from './world';
+import {Valuation} from './valuation';
+import {World} from './world';
 
 export class WorldValuation extends World {
   valuation: Valuation;

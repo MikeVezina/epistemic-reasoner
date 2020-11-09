@@ -1,12 +1,12 @@
-import { environment } from '../environment';
-import { ExplicitEpistemicModel } from '../epistemicmodel/explicit-epistemic-model';
-import { Postcondition } from './postcondition';
-import { TrivialPostcondition } from './trivial-postcondition';
-import {Formula, FormulaFactory, TrueFormula} from './../formula/formula';
-import { EventModel } from './event-model';
-import { Graph } from './../graph';
-import { Event } from './event';
-import { World } from '../epistemicmodel/world';
+import {environment} from '../environment';
+import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model';
+import {Postcondition} from './postcondition';
+import {TrivialPostcondition} from './trivial-postcondition';
+import {Formula, FormulaFactory} from './../formula/formula';
+import {EventModel} from './event-model';
+import {Graph} from './../graph';
+import {Event} from './event';
+import {World} from '../epistemicmodel/world';
 
 export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpistemicModel> {
 
