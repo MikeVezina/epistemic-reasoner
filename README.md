@@ -1,4 +1,7 @@
 # Epistemic Reasoning as a Service
+Deployed at: https://epistemic-reasoner.herokuapp.com/
+
+
 
 ## Epistemic Reasoner API (Node.js)
 This is a fork of [hintikkasworld](https://gitlab.inria.fr/fschwarz/hintikkasworld) that provides a simple API for 
@@ -23,7 +26,7 @@ cd epistemic-reasoner
 npm install
 ```
 
-### 3. Running the tests
+### 3. Running the tests (stale, not passing)
 ```
 npm test
 ```
@@ -33,7 +36,7 @@ npm test
 npm start
 ```
 
-# API Endpoints
+# API Endpoints (Out-of-date)
 All API endpoints are currently defined in `src/app/ApiRouter.ts`. 
 Only the main endpoints will be listed below, please look at ApiRouter.ts for all possible endpoints.
 
