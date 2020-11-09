@@ -1,11 +1,8 @@
 # Epistemic Reasoning as a Service
-Deployed at: https://epistemic-reasoner.herokuapp.com/
+Deployed at (there is no front-end): https://epistemic-reasoner.herokuapp.com/
 
-
-
-## Epistemic Reasoner API (Node.js)
-This is a fork of [hintikkasworld](https://gitlab.inria.fr/fschwarz/hintikkasworld) that provides a simple API for 
-creating, updating, and reasoning about Explicit Epistemic models.
+## Epistemic Reasoner API (Express/Node.js Server)
+This is a fork of [hintikkasworld](https://gitlab.inria.fr/fschwarz/hintikkasworld) that has been stripped of anything other than the explicit models and barebones reasoner, and exposes the functionality via a REST API. This server provides a simple API for creating, updating, and reasoning about Explicit Epistemic models. 
 
 ## Epistemic Agents
 The agents using this reasoner can be found at: https://github.com/MikeVezina/epistemic-agents
@@ -26,17 +23,17 @@ cd epistemic-reasoner
 npm install
 ```
 
-### 3. Running the tests (stale, not passing)
-```
-npm test
-```
-
-### 4. Starting the application
+### 3. Starting the application
 ```
 npm start
 ```
 
-# API Endpoints (Out-of-date)
+### 4.  ~~Running the tests~~ (Out-of-date, not passing, updating soon)
+```
+npm test
+```
+
+# ~~API Endpoints~~ (Out-of-date, updating soon)
 All API endpoints are currently defined in `src/app/ApiRouter.ts`. 
 Only the main endpoints will be listed below, please look at ApiRouter.ts for all possible endpoints.
 
