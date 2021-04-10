@@ -1,9 +1,13 @@
 import * as express from 'express';
 import {CustomDescription} from './models/CustomDescription';
 import {CustomEnvironment} from './models/CustomEnvironment';
-import {AtomicFormula, KFormula, KposFormula, NotFormula} from './modules/core/models/formula/formula';
+import {AtomicFormula, Formula, FormulaFactory, KFormula, KposFormula, NotFormula} from './modules/core/models/formula/formula';
 import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
 import fs from 'fs';
+import {JasonAgentEnvironment} from './models/JasonAgentEnvironment';
+import {JasonAgentDescription} from './models/JasonAgentDescription';
+import {AgentExplicitEpistemicModel} from './modules/core/models/epistemicmodel/agent-explicit-epistemic-model';
+import {ExplicitEventModel} from './modules/core/models/eventmodel/explicit-event-model';
 
 function createAcesAndEightsModel(): object {
     return {
@@ -170,7 +174,7 @@ export class ApiRouter {
 
     createApp(app: express.Application): any {
 
-        let curEnvironment: CustomEnvironment;
+        let curEnvironment: JasonAgentEnvironment;
 
         // Lets just initialize curEnvironment for now...
         // let rawData = createAcesAndEightsModel();
@@ -180,8 +184,9 @@ export class ApiRouter {
         const file = 'desc_cache.json';
         let descCache = {};
 
-        if (!fs.existsSync(file))
+        if (!fs.existsSync(file)) {
             fs.writeFileSync(file, '{}');
+        }
 
         // var test = fs.readFileSync(file, 'utf-8');
 
@@ -207,7 +212,7 @@ export class ApiRouter {
          * Input: CustomDescription
          * Output: None.
          */
-        app.post('/api/model', async function (req, res: express.Response) {
+        app.post('/api/model', async function(req, res: express.Response) {
 
             let data = req.body;
             let props = req.body.props || [];
@@ -229,37 +234,35 @@ export class ApiRouter {
             // Create and Place in cache.
             // let curDescription = descCache[dataString] || new CustomDescription(data);
             try {
-                let curDescription = new CustomDescription(data);
-                descCache[dataString] = curDescription;
+                let curDescription = new JasonAgentDescription(data);
+
+                // Todo: Enable cache (large models result in RangeError: serialized string length too long)
+                //descCache[dataString] = curDescription;
 
                 // Create Description end time
                 let descEnd = Date.now();
 
-                curEnvironment = new CustomEnvironment(curDescription);
+                curEnvironment = new JasonAgentEnvironment(curDescription);
                 let envEnd = Date.now();
 
-                // Set the pointed world
-                let valuation = ExplicitEpistemicModel.createUpdateFormula(props);
-                curEnvironment.getEpistemicModel().setPointedWorld(valuation);
-                let valuationEnd = Date.now();
-
                 console.log('');
-                console.log('Model Metrics:')
+                console.log('Model Metrics:');
                 console.log('------- -------');
-                console.log('Cached: ' + isCached)
-                console.log('Create Desc. Time: ' + (descEnd - start));
+                console.log('Cached: ' + isCached);
+                console.log('Create Description (Initial Model) Time: ' + (descEnd - start));
                 console.log('Create Env. Time: ' + (envEnd - descEnd));
-                console.log('Pointed World Time: ' + (valuationEnd - envEnd));
-                console.log('Total Time: ' + (valuationEnd - start));
+                console.log('Total Time: ' + (envEnd - start));
                 console.log('------- -------');
                 console.log('Worlds: ' + curEnvironment.getEpistemicModel().getNumberWorlds());
-                console.log('Edges: ' + curEnvironment.getEpistemicModel().getNumberEdges());
+                console.log('Atomic Propositions: ' + curEnvironment.getExampleDescription().getAtomicPropositions().length);
+                console.log('Edges/Simulated: ' + curEnvironment.getEpistemicModel().getNumberEdges() + ' / ' + curEnvironment.getEpistemicModel().getNumberFalseEdges());
                 console.log('Pointed: ' + curEnvironment.getEpistemicModel().getPointedWorldID());
                 console.log('======= =======');
 
                 // Write to cache
-                if (!isCached)
+                if (!isCached) {
                     fs.writeFileSync(file, JSON.stringify(descCache));
+                }
             } catch (err) {
                 console.warn('An error occurred while parsing the input model. Error: ' + err);
             }
@@ -268,7 +271,7 @@ export class ApiRouter {
         });
 
 
-        app.get('/api/model', async function (req, res) {
+        app.get('/api/model', async function(req, res) {
             if (!curEnvironment) {
                 return res.send({error: 'No Environment.'});
             }
@@ -291,7 +294,7 @@ export class ApiRouter {
          * Input: { formula: String }
          * Output: { result: boolean }
          */
-        app.post('/api/evaluate', async function (req, res) {
+        app.post('/api/evaluate', async function(req, res) {
             if (!curEnvironment) {
                 return res.send({error: 'No Environment.'});
             }
@@ -314,29 +317,30 @@ export class ApiRouter {
          * Input: { [id: string]: boolean } | string[]
          * Output: { success: boolean }
          */
-        app.put('/api/props', async function (req, res) {
-            let propValues: [{ [id: string]: boolean }] = req.body.props || [];
-            // Convert BB update to formula
-            let propFormula = ExplicitEpistemicModel.createUpdateFormula(propValues);
-
-            let {success, result} = await curEnvironment.updateModel(propFormula);
-            let formulaResults: any = {};
-
-            // Evaluate formulas if they are provided
-            if (req.body.formulas) {
-                formulaResults = evaluateFormulas(req.body.formulas, result);
+        app.put('/api/props', async function(req, res) {
+            if (!curEnvironment) {
+                console.log('No environment setup');
+                return res.end();
             }
 
 
-            res.send({
-                success,
-                result: formulaResults
-            });
+            try {
+                let knowledgeValuation: { [id: string]: boolean } = req.body.props || [];
+                // console.log("Received Knowledge Update: " + JSON.stringify(knowledgeValuation));
+
+                let {success, result} = await curEnvironment.updateModel(knowledgeValuation);
+                res.send({success});
+
+            } catch (err) {
+                console.error('There was an error updating propositions: ' + err);
+            }
+
+
             res.end();
         });
 
 
-        function evaluateFormulas(formulas: any[] | any, model: ExplicitEpistemicModel): { [id: number]: boolean } {
+        function evaluateFormulas(formulas: any[] | any, model: AgentExplicitEpistemicModel): { [id: number]: boolean } {
             let formulaResults: { [id: number]: boolean } = {};
 
             if (formulas === undefined) {
@@ -352,7 +356,7 @@ export class ApiRouter {
                 if (formulaResults[formula.id] !== undefined) {
                     console.warn('formula with id ' + formula.id + ' was already evaluated (possible duplicate formula): ' + parsedFormula.prettyPrint());
                 }
-                formulaResults[formula.id] = model.modelCheck(model.getPointedWorldID(), parsedFormula);
+                formulaResults[formula.id] = model.checkSync(parsedFormula);
             }
 
             return formulaResults;
@@ -364,25 +368,25 @@ export class ApiRouter {
             }
 
             let agent = formula.agent || CustomDescription.DEFAULT_AGENT;
-            let type = formula.type;
-            let inverted = formula.invert === undefined ? true : formula.invert;
+            let {modality, modalityNegated, prop, propNegated} = formula;
 
-            // Nested formula (returns undefined if there is no inner formula)
-            let innerFormula = parseFormulaObject(formula.inner);
-            let returnObject;
+            let propFormula: Formula = new AtomicFormula(prop);
 
-
-            if (type === 'knows' || type === 'know' || type === 'k') {
-                returnObject = new KFormula(agent, innerFormula);
-            } else if (type === 'possible') {
-                returnObject = new KposFormula(agent, innerFormula);
-            } else if (type === 'prop') {
-                returnObject = new AtomicFormula(formula.prop);
-            } else {
-                throw 'invalid type ' + type;
+            if (propNegated) {
+                propFormula = new NotFormula(propFormula);
             }
 
-            return inverted ? new NotFormula(returnObject) : returnObject;
+            let modalityFormula;
+
+            if (modality === 'knows' || modality === 'know' || modality === 'k') {
+                modalityFormula = new KFormula(agent, propFormula);
+            } else if (modality === 'possible') {
+                modalityFormula = new KposFormula(agent, propFormula);
+            } else {
+                throw 'invalid type ' + modality;
+            }
+
+            return modalityNegated ? new NotFormula(modalityFormula) : modalityFormula;
         }
 
 

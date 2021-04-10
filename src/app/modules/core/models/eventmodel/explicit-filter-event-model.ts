@@ -32,8 +32,7 @@ export class ExplicitFilterEventModel extends ExplicitEventModel {
         return super.apply(this.initialModel);
     }
 
-
-    static getActionModelNewInformation(initialModel: ExplicitEpistemicModel, formula: Formula, agent: string) {
+    static fasterNewInformationActionModel(initialModel: ExplicitEpistemicModel, formula: Formula, agent: string) {
         var E = new ExplicitFilterEventModel(formula, initialModel);
 
         // Create nodes that match the formula
@@ -49,6 +48,30 @@ export class ExplicitFilterEventModel extends ExplicitEventModel {
         // Point to the action where formula is true
         E.setPointedAction('e');
         return E;
+    }
+
+
+    static getActionModelNewInformation(initialModel: ExplicitEpistemicModel, formula: Formula, agent: string) {
+
+        // Faster method removes the not formula
+        return ExplicitFilterEventModel.fasterNewInformationActionModel(initialModel, formula, agent);
+
+        //
+        // var E = new ExplicitFilterEventModel(formula, initialModel);
+        //
+        // // Create nodes that match the formula
+        // E.addAction('e', formula);
+        //
+        // // Nodes that do not match the formula
+        // E.addAction('f', new NotFormula(formula));
+        //
+        // // Only create edges for worlds that belong together
+        // E.addEdge(agent, 'e', 'e');
+        // E.addEdge(agent, 'f', 'f');
+        //
+        // // Point to the action where formula is true
+        // E.setPointedAction('e');
+        // return E;
     }
 
 

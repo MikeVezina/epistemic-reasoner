@@ -21,8 +21,8 @@ export class Environment {
     /**
      * Gets the current state of the epistemic model.
      */
-    getEpistemicModel(): ExplicitEpistemicModel {
-        return <ExplicitEpistemicModel> this._epistemicModel;
+    getEpistemicModel(): EpistemicModel {
+        return <EpistemicModel> this._epistemicModel;
     }
 
     setEpistemicModel(M: EpistemicModel) {

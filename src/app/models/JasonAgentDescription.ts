@@ -5,14 +5,16 @@ import {FormulaFactory} from '../modules/core/models/formula/formula';
 import {ExplicitEventModel} from '../modules/core/models/eventmodel/explicit-event-model';
 import {Valuation} from '../modules/core/models/epistemicmodel/valuation';
 import {CustomWorld} from './CustomWorld';
+import {AgentExplicitEpistemicModel} from '../modules/core/models/epistemicmodel/agent-explicit-epistemic-model';
+import {watch} from 'fs';
+import {WorldValuation} from '../modules/core/models/epistemicmodel/world-valuation';
 
-export class CustomDescription extends ExampleDescription {
+export class JasonAgentDescription extends ExampleDescription {
 
-    private actions: EventModelAction[] = [];
     private atomicPropositions: string[];
     private name: string;
     private rawData: any;
-    private readonly initialModel: ExplicitEpistemicModel;
+    private readonly initialModel: AgentExplicitEpistemicModel;
     public static readonly DEFAULT_AGENT: string = 'a';
 
     /**
@@ -21,15 +23,10 @@ export class CustomDescription extends ExampleDescription {
      * rawData := {
      *      name: String?,
      *
-     *      propositions: String[]?,
      *
      *      epistemicModel : {
-     *         worlds: World[],
-     *         edges: Edge[]?,
-     *         pointedWorld: String?
-     *      },
-     *
-     *      actions: Action[]?
+     *         worlds: World[]
+     *      }
      * }
      *
      * World := {
@@ -37,16 +34,6 @@ export class CustomDescription extends ExampleDescription {
      *      props: String[]
      * }
      *
-     * Edge := {
-     *      agentName: String,
-     *      worldOne: String,
-     *      worldTwo: String
-     * }
-     *
-     * Action := {
-     *     description: String,
-     *     formula: String
-     * }
      *
      * @param data The raw data JS object.
      */
@@ -66,25 +53,23 @@ export class CustomDescription extends ExampleDescription {
         this.name = data.name || 'DefaultName';
 
         // Optional propositions
-        this.atomicPropositions = data.propositions || this.generatePropositions();
+        this.atomicPropositions = this.generatePropositions();
 
         this.initialModel = this.parseModel();
 
-        // Parse the actions
-        this.parseActions(data.actions);
+        var e = new ExplicitEpistemicModel();
+
 
     }
 
 
-    private loadModel(data: any): ExplicitEpistemicModel {
+    private loadModel(data: any): AgentExplicitEpistemicModel {
 
         // Load initial model directly.
-        let curModel = new ExplicitEpistemicModel();
+        let curModel = new AgentExplicitEpistemicModel();
         let oldModel = data.initialModel;
 
         curModel.setNodes(oldModel.nodes);
-        curModel.setSuccessors(oldModel.successors);
-        curModel.setPointedNode(oldModel.pointed);
 
         return curModel;
     }
@@ -92,32 +77,48 @@ export class CustomDescription extends ExampleDescription {
     /**
      * Used to generate the list of propositions if they are not explicitly provided in the raw data. Iterates through all worlds and adds propositions to a set.
      */
-    private generatePropositions(): Set<String> {
-        let propSet = new Set<String>();
+    private generatePropositions(): string[] {
+        let propSet = [];
 
         for (let {props} of this.getRawWorlds()) {
             for (let prop of props) {
-                propSet.add(prop);
+                propSet.push(prop);
             }
         }
 
         return propSet;
     }
 
+    // No actions needed
     getActions() {
-        return this.actions;
+        return [];
     }
 
     getAtomicPropositions(): string[] {
+        if (this.atomicPropositions.length === 0)
+        {
+            let propSet = new Set()
+            for (let world of Array.from(this.initialModel.getWorlds()))
+            {
+                let valW = <WorldValuation> world;
+                for (let prop of Object.keys(valW.valuation.propositions))
+                    propSet.add(prop)
+            }
+
+            this.atomicPropositions = <string[]> Array.from(propSet);
+        }
+
+
+
         return this.atomicPropositions;
     }
 
 
     getDescription(): string[] {
-        return [];
+        return ["A Jason Agent's Description"];
     }
 
-    getInitialEpistemicModel(): ExplicitEpistemicModel {
+    getInitialEpistemicModel(): AgentExplicitEpistemicModel {
         return this.parseModel();
     }
 
@@ -125,24 +126,6 @@ export class CustomDescription extends ExampleDescription {
         return this.name;
     }
 
-    private parseActions(rawActions: any[]) {
-
-        if (!rawActions) {
-            return;
-        }
-
-        // Iterate through the actions and create new events/actions from the raw data
-        // For now, this only supports public announcements. This could be improved through a factory method.
-        for (let {description, formula} of rawActions) {
-            let parsedFormula = FormulaFactory.createFormula(formula);
-
-            this.actions.push(new EventModelAction({
-                name: description,
-                eventModel: ExplicitEventModel.getEventModelPublicAnnouncement(parsedFormula)
-            }));
-
-        }
-    }
 
     getAgents(): string[] {
         return this.getInitialEpistemicModel().getAgents();
@@ -157,38 +140,21 @@ export class CustomDescription extends ExampleDescription {
         return this.getRawModel().worlds;
     }
 
-    private parseModel(): ExplicitEpistemicModel {
+    private parseModel(): AgentExplicitEpistemicModel {
         if (this.initialModel)
             return this.initialModel;
 
-        let {worlds, edges, pointedWorld} = this.getRawModel();
-        let epistemicModel = new ExplicitEpistemicModel();
+        let startTime = Date.now();
+
+        let {worlds} = this.getRawModel();
+        let epistemicModel = new AgentExplicitEpistemicModel();
 
 
         for (let {name, props} of worlds) {
             epistemicModel.addWorld(name, new CustomWorld(new Valuation(props)));
         }
 
-        if (edges) {
-            for (let {agentName, worldOne, worldTwo} of edges) {
-                epistemicModel.addEdge(agentName, worldOne, worldTwo);
-            }
-        } else {
-            // Add edges to all nodes
-
-            epistemicModel.bulkAddEdges(CustomDescription.DEFAULT_AGENT);
-        }
-
-
-        // No initial props?
-        // todo add initial props?
-        let initialProps = [];
-        if (pointedWorld)
-            epistemicModel.setPointedWorld(pointedWorld);
-        else {
-            let update = ExplicitEpistemicModel.createUpdateFormula({});
-            epistemicModel.setPointedWorld(update);
-        }
+        console.log("Model Parse Time: " + (Date.now() - startTime));
 
         return epistemicModel;
     }

@@ -71,19 +71,21 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
         return true;
     }
 
-    public static createUpdateFormula(propValues: [{ [id: string]: boolean }] | []): Formula {
+    public static createUpdateFormula(propValues: { [id: string]: boolean }): Formula {
         // Create AND (with true formula, just in case no other prop values)
         let fullFormula = new AndFormula([new TrueFormula()]);
 
-        for (let nextFormula of propValues) {
-            if (Object.keys(nextFormula).length === 0) {
-                continue;
+        for (let nextProp of Object.keys(propValues)) {
+            // Whether or not the prop should be true/false
+            let propVal = propValues[nextProp];
+            let atomicFormula: Formula = new AtomicFormula(nextProp);
+
+            // If prop valuation is false, wrap with the Not formula.
+            if (!propVal) {
+                atomicFormula = new NotFormula(atomicFormula);
             }
 
-            let valuation = new Valuation(nextFormula);
-            let valuationFormulas = this.getValuationAtomicFormulas(valuation);
-
-            fullFormula.formulas.push(new OrFormula(valuationFormulas));
+            fullFormula.formulas.push(atomicFormula);
         }
 
         return fullFormula;
@@ -129,8 +131,9 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
      **/
     setPointedWorld(w: String | Formula) {
 
-        if (w === undefined)
+        if (w === undefined) {
             throw ('could not find undefined world: ' + w);
+        }
 
         if (w instanceof String || typeof w === 'string') {
             if (this.nodes[<string> w] == undefined) {
@@ -174,6 +177,7 @@ export class ExplicitEpistemicModel extends Graph implements EpistemicModel {
     getPointedWorldID() {
         return this.getPointedNode();
     }
+
 
     /**
      * @param w world identifier
