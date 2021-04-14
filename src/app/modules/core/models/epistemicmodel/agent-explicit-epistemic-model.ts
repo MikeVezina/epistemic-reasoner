@@ -161,15 +161,33 @@ export class AgentExplicitEpistemicModel implements EpistemicModel {
                 let phi2 = <types.KFormula> phi;
                 let agent = phi2.agent;
                 let psi = phi2.formula;
-                return this.getSuccessorsID(w, agent)
-                    .every(u => this.modelCheck(u, psi));
+                let start = Date.now();
+
+                let val = this.getSuccessorsID(w, agent)
+                    .every(u => {
+                        return this.modelCheck(u, psi);
+                    });
+                let delta = Date.now() - start;
+                // console.log(delta)
+                return val;
+                // return this.getSuccessorsID(w, agent)
+                //     .every(u => this.modelCheck(u, psi));
             }
             case (phi instanceof types.KposFormula): {
                 let phi2 = <types.KposFormula> phi;
                 let agent = phi2.agent;
                 let psi = phi2.formula;
-                return this.getSuccessorsID(w, agent)
-                    .some(u => this.modelCheck(u, psi));
+                let start = Date.now();
+                let val = !this.getSuccessorsID(w, agent)
+                    .every(u => {
+                        return !this.modelCheck(u, psi);
+                    });
+                let delta = Date.now() - start;
+
+                // console.log(delta)
+                return val;
+                // return this.getSuccessorsID(w, agent)
+                //     .some(u => this.modelCheck(u, psi));
             }
             case (phi instanceof types.KwFormula): {
                 let phi2 = <types.KwFormula> phi;

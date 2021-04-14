@@ -44,11 +44,12 @@ export class JasonAgentEnvironment extends Environment {
     /**
      * Determine if current knowledge has all of previous knowledge
      * @param knowledgeVal
+     * @param prevKnowledge
      */
-    isMonotonicUpdate(knowledgeVal: { [p: string]: boolean }) {
+    static isMonotonicUpdate(knowledgeVal: { [p: string]: boolean }, prevKnowledge: { [p: string]: boolean }) {
 
-        for (let key of Object.keys(this.previousKnowledge)) {
-            let prevVal = this.previousKnowledge[key];
+        for (let key of Object.keys(prevKnowledge)) {
+            let prevVal = prevKnowledge[key];
 
             let curVal = knowledgeVal[key];
 
@@ -65,7 +66,9 @@ export class JasonAgentEnvironment extends Environment {
 
     async updateModel(knowledgeValuation: { [p: string]: boolean }): Promise<{ success: Boolean; result: AgentExplicitEpistemicModel }> {
         console.log("Prev. Model Size: " + this.getEpistemicModel().getNumberWorlds())
-        console.log("Prev. Val: " + JSON.stringify(this.previousKnowledge))
+        console.log("Cur. Val: " + Object.keys(this.previousKnowledge).length)
+
+        // console.log("Prev. Val: " + JSON.stringify(this.previousKnowledge))
 
         let startTime = Date.now();
 
@@ -74,7 +77,7 @@ export class JasonAgentEnvironment extends Environment {
 
         let appliedModel = this.getEpistemicModel();
 
-        if (!this.isMonotonicUpdate(knowledgeValuation)) {
+        if (!JasonAgentEnvironment.isMonotonicUpdate(knowledgeValuation, this.previousKnowledge)) {
             appliedModel = this.customDesc.getInitialEpistemicModel();
         }
 
@@ -88,12 +91,13 @@ export class JasonAgentEnvironment extends Environment {
             this.setEpistemicModel(result);
             this.previousKnowledge = knowledgeValuation;
 
-            console.log("Cur. Val: " + JSON.stringify(knowledgeValuation))
+            console.log("Cur. Val: " + Object.keys(knowledgeValuation).length)
+            // console.log("Cur. Val: " + JSON.stringify(knowledgeValuation))
             console.log("Cur. Model Size: " + result.getNumberWorlds())
             console.log("Update Time: " + (Date.now() - startTime))
             console.log("=====")
 
-        }        
+        }
 
         return {
             success: resultSuccess,

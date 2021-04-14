@@ -8,6 +8,7 @@ import {JasonAgentEnvironment} from './models/JasonAgentEnvironment';
 import {JasonAgentDescription} from './models/JasonAgentDescription';
 import {AgentExplicitEpistemicModel} from './modules/core/models/epistemicmodel/agent-explicit-epistemic-model';
 import {ExplicitEventModel} from './modules/core/models/eventmodel/explicit-event-model';
+import {WorldValuation} from './modules/core/models/epistemicmodel/world-valuation';
 
 function createAcesAndEightsModel(): object {
     return {
@@ -170,7 +171,10 @@ function createAcesAndEightsModel(): object {
     };
 }
 
+let debugval = true;
+
 export class ApiRouter {
+
 
     createApp(app: express.Application): any {
 
@@ -284,6 +288,64 @@ export class ApiRouter {
 
             resultObject.model = curEnvironment.getEpistemicModel();
 
+            if (debugval) {
+                let sortedWorlds = [];
+
+                for (let world of curEnvironment.getEpistemicModel().worldArray) {
+                    let val = (<WorldValuation> world).valuation;
+                    let props = val.propositions;
+
+
+                    let sortedProps = [];
+                    for (let p of Object.keys(props)) {
+                        if (props[p] === true) {
+                            sortedProps.push(p);
+                        }
+                    }
+
+                    sortedProps.sort();
+                    sortedProps.sort((a, b) => {
+                        if (a.indexOf('location') == 0) {
+                            return -1;
+                        }
+                        if (b.indexOf('location') == 0) {
+                            return 1;
+                        }
+
+                        return 0;
+                    });
+                    sortedWorlds.push(sortedProps);
+                }
+                sortedWorlds.sort((l1: string[], l2: string[]) => {
+                    return l1[0].localeCompare(l2[0]);
+                });
+
+                for (let w of sortedWorlds) {
+                    console.log('W: ' + w[0]);
+                    let prev = undefined;
+
+                    for (let p of w) {
+
+
+                        let view = p.substr(0, p.indexOf("["));
+
+                        if (view === 'closest')
+                            view = p.substr(0, p.indexOf("[") + 3);
+
+                        if (prev === undefined) {
+                            prev = view;
+                        } else if (prev !== view) {
+                            console.log('--');
+                            prev = view;
+                        }
+
+                        console.log(p);
+                    }
+                    console.log();
+                }
+            }
+
+
             res.send(resultObject);
             res.end();
         });
@@ -351,13 +413,25 @@ export class ApiRouter {
                 formulas = [formulas];
             }
 
+            let start = Date.now();
+            let formTot = 0;
+
             for (let formula of formulas) {
                 let parsedFormula = parseFormulaObject(formula);
                 if (formulaResults[formula.id] !== undefined) {
                     console.warn('formula with id ' + formula.id + ' was already evaluated (possible duplicate formula): ' + parsedFormula.prettyPrint());
                 }
-                formulaResults[formula.id] = model.checkSync(parsedFormula);
+                let formStr = Date.now();
+                let res = model.checkSync(parsedFormula);
+                let delta = Date.now() - formStr;
+                formTot += delta;
+
+                formulaResults[formula.id] = res;
+
+
             }
+
+            console.log(Object.keys(formulas).length + ' formulas took ' + (Date.now() - start) + ' or ' + formTot);
 
             return formulaResults;
         }

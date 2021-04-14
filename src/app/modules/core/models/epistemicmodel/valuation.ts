@@ -19,7 +19,7 @@ export class Valuation {
     }
 
     isPropositionTrue(p: string) {
-        return (this.propositions[p] == true);
+        return !!this.propositions[p];
     }
 
     /* the use of Maps is overkilling. Please use getPropositionMap */
