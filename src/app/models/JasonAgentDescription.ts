@@ -57,8 +57,6 @@ export class JasonAgentDescription extends ExampleDescription {
 
         this.initialModel = this.parseModel();
 
-        var e = new ExplicitEpistemicModel();
-
 
     }
 
@@ -153,6 +151,9 @@ export class JasonAgentDescription extends ExampleDescription {
         for (let {name, props} of worlds) {
             epistemicModel.addWorld(name, new CustomWorld(new Valuation(props)));
         }
+
+        console.log("Adding edges");
+        epistemicModel.bulkAddEdges();
 
         console.log("Model Parse Time: " + (Date.now() - startTime));
 

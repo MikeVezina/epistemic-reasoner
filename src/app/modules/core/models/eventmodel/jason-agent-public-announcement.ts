@@ -5,6 +5,8 @@ import {ExplicitEventModel} from './explicit-event-model';
 import {World} from '../epistemicmodel/world';
 import {EventModel} from './event-model';
 import {AgentExplicitEpistemicModel} from '../epistemicmodel/agent-explicit-epistemic-model';
+import {JasonAgentEnvironment} from '../../../../models/JasonAgentEnvironment';
+import {CustomDescription} from '../../../../models/CustomDescription';
 
 /**
  * A class that updates a Jason Agent Epistemic model.
@@ -32,6 +34,12 @@ export class JasonAgentPublicAnnouncement implements EventModel<AgentExplicitEpi
      * @param M (unused) the current model.
      */
     apply(M: AgentExplicitEpistemicModel): AgentExplicitEpistemicModel {
+
+        // Use old events for non optimized
+        if (!M.optimize) {
+            let ann = ExplicitEventModel.getEventModelPublicAnnouncement(this.propEval);
+            return ann.apply(M);
+        }
 
         let resultModel = new AgentExplicitEpistemicModel();
 

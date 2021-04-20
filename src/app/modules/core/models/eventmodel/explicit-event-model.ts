@@ -7,6 +7,7 @@ import {EventModel} from './event-model';
 import {Graph} from './../graph';
 import {Event} from './event';
 import {World} from '../epistemicmodel/world';
+import {AgentExplicitEpistemicModel} from '../epistemicmodel/agent-explicit-epistemic-model';
 
 export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpistemicModel> {
 
@@ -86,7 +87,7 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
         return M.check(this.getPrecondition(this.getPointedAction()));
     }
 
-    apply(M: ExplicitEpistemicModel): ExplicitEpistemicModel {
+    apply(M: ExplicitEpistemicModel): AgentExplicitEpistemicModel {
 
         /**
          * @param a world identifier w
@@ -174,8 +175,12 @@ export class ExplicitEventModel extends Graph implements EventModel<ExplicitEpis
          * @param E action model
          * @returns the epistemic model that is the product of M and E
          */
-        function product(M: ExplicitEpistemicModel, E: ExplicitEventModel): ExplicitEpistemicModel {
-            let ME = new ExplicitEpistemicModel();
+        function product(M: ExplicitEpistemicModel, E: ExplicitEventModel): AgentExplicitEpistemicModel {
+
+            // If prev model was AgentEpistemicModel and was optimized then preserve the setting
+            let shouldOptimize = M instanceof AgentExplicitEpistemicModel && (<AgentExplicitEpistemicModel> M).optimize;
+
+            let ME = new AgentExplicitEpistemicModel(shouldOptimize);
             let agents = environment.agents;
 
             /**

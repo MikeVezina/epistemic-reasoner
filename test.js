@@ -8,7 +8,22 @@ function makeFakeVal(size, fakeVal = {}) {
     let curSz = Object.keys(newFake).length;
 
     while (curSz < size) {
-        let nextKey = "fake-" + curSz;
+        let rand = Math.floor(Math.random() * 100) + 1;
+        let nextKey = "fake-" + rand;
+        newFake[nextKey] = false;
+        curSz++;
+    }
+
+    return newFake;
+}
+function makeFakes(init, size) {
+    let newFake = {};
+
+    let curSz = 0;
+
+    while (curSz < size) {
+        let next = init + curSz
+        let nextKey = "fake-" + next;
         newFake[nextKey] = false;
         curSz++;
     }
@@ -16,22 +31,13 @@ function makeFakeVal(size, fakeVal = {}) {
     return newFake;
 }
 
-async function testMetrics(init, target) {
+async function testMetrics(init, size) {
 
+    let faker = makeFakes(init, size)
     let start = Date.now();
-    let faker = makeFakeVal(init)
     await sendReq(faker)
-    console.log("Update Time: " + (Date.now() - start) + " for " + init)
-
-    if (target === undefined)
-        return;
-
-    start = Date.now();
-
-    let extended = makeFakeVal(target, faker)
-    let t = await sendReq(extended)
-    console.log("Update Time: " + (Date.now() - start) + " for " + target + " from " + init)
-
+    console.log("Update Time: " + (Date.now() - start) + " for " + size)
+    return init + size;
 }
 
 
@@ -45,16 +51,22 @@ async function sendReq(props) {
         method: 'PUT',
         headers: myHeaders,
         body,
-        redirect: 'follow'
+        redirect: 'manual',
+        cache: 'no-cache'
     };
 
-    return await fetch("http://localhost:9090/api/props", requestOptions)
+    return await fetch("http://localhost:9090/api/props", requestOptions).then(async res => {
+        return await res.json();
+    })
 }
 let main = async () => {
-    await testMetrics(4)
-    await testMetrics(40)
-    await testMetrics(400)
-    await testMetrics(4000)
+    let next = await testMetrics(0, 1)
+    console.log("====")
+    next = await testMetrics(next, 4)
+    next = await testMetrics(next, 40)
+    next = await testMetrics(next, 400)
+    next = await testMetrics(next, 4000)
+    // await testMetrics(4000, 4000)
 };
 
 main();

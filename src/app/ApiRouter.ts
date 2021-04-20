@@ -291,7 +291,7 @@ export class ApiRouter {
             if (debugval) {
                 let sortedWorlds = [];
 
-                for (let world of curEnvironment.getEpistemicModel().worldArray) {
+                for (let world of curEnvironment.getEpistemicModel().getWorlds()) {
                     let val = (<WorldValuation> world).valuation;
                     let props = val.propositions;
 

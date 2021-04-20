@@ -1,3 +1,4 @@
+import {CustomDescription} from '../../../models/CustomDescription';
 
 export class Graph {
 
@@ -135,8 +136,6 @@ export class Graph {
         // Convert set to array
         return Array.from(Object.keys(this.successors[agent][node]));
     }
-
-
 
     /**
     @param agent
@@ -279,7 +278,7 @@ export class Graph {
         if (idnode in this.nodes) return true;
         return false;
     }
-    bulkAddEdges(agent)
+    bulkAddEdges(agent=CustomDescription.DEFAULT_AGENT)
     {
         if (this.successors[agent] == undefined)
             this.successors[agent] = {};

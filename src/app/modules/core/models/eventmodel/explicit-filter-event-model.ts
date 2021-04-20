@@ -2,6 +2,7 @@ import {ExplicitEpistemicModel} from '../epistemicmodel/explicit-epistemic-model
 
 import {Formula, NotFormula} from '../formula/formula';
 import {ExplicitEventModel} from './explicit-event-model';
+import {AgentExplicitEpistemicModel} from '../epistemicmodel/agent-explicit-epistemic-model';
 
 export class ExplicitFilterEventModel extends ExplicitEventModel {
 
@@ -23,7 +24,7 @@ export class ExplicitFilterEventModel extends ExplicitEventModel {
      * Applies the set propositions to the initial model. Does not update the current model.
      * @param M (unused) the current model.
      */
-    apply(): ExplicitEpistemicModel {
+    apply(): AgentExplicitEpistemicModel {
 
         // Update the pointed world to reflect new information
         // This could benefit from memoization (pointed world is already calculated during 'isApplicableIn'

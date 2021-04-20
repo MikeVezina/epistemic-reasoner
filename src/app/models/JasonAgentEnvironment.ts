@@ -66,7 +66,7 @@ export class JasonAgentEnvironment extends Environment {
 
     async updateModel(knowledgeValuation: { [p: string]: boolean }): Promise<{ success: Boolean; result: AgentExplicitEpistemicModel }> {
         console.log("Prev. Model Size: " + this.getEpistemicModel().getNumberWorlds())
-        console.log("Cur. Val: " + Object.keys(this.previousKnowledge).length)
+        console.log("Prev. Val: " + Object.keys(this.previousKnowledge).length)
 
         // console.log("Prev. Val: " + JSON.stringify(this.previousKnowledge))
 

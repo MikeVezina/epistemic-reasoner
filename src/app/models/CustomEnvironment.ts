@@ -4,6 +4,7 @@ import {Formula} from '../modules/core/models/epistemicmodel/formula';
 import {FormulaFactory} from '../modules/core/models/formula/formula';
 import {ExplicitFilterEventModel} from '../modules/core/models/eventmodel/explicit-filter-event-model';
 import {ExplicitEpistemicModel} from '../modules/core/models/epistemicmodel/explicit-epistemic-model';
+import {EpistemicModel} from '../modules/core/models/epistemicmodel/epistemic-model';
 
 export class CustomEnvironment extends Environment {
 
@@ -35,7 +36,7 @@ export class CustomEnvironment extends Environment {
         return await this.getEpistemicModel().check(<Formula> formula);
     }
 
-    async updateModel(props: Formula, agent: string=CustomDescription.DEFAULT_AGENT): Promise<{success: Boolean, result: ExplicitEpistemicModel}> {
+    async updateModel(props: Formula, agent: string=CustomDescription.DEFAULT_AGENT): Promise<{success: Boolean, result: EpistemicModel}> {
         let initModel = this.customDesc.getInitialEpistemicModel();
 
         let event = ExplicitFilterEventModel.getActionModelNewInformation(initModel, props, agent);
