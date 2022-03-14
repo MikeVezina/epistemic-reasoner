@@ -1,4 +1,6 @@
 import {Scheme} from './scheme';
+import {CustomEnvironment} from '../../../../models/CustomEnvironment';
+import {CustomDescription} from '../../../../models/CustomDescription';
 
 export interface Formula {
     isBoolean(): boolean;
@@ -121,7 +123,7 @@ export class AndFormula implements Formula {
     }
 }
 
-abstract class ModalOperatorFormula implements Formula {
+export abstract class ModalOperatorFormula implements Formula {
     isBoolean() {
         return false;
     }
@@ -162,6 +164,26 @@ export class KFormula extends ModalOperatorFormula {
     
     opString(): string {
         return "K";
+    }
+}
+
+export class BFormula extends ModalOperatorFormula {
+    isBoolean() {
+        return false;
+    }
+
+    constructor(f: Formula) {
+        super(CustomDescription.DEFAULT_AGENT, f);
+    }
+
+
+    readonly type = "B";
+    clone(): ModalOperatorFormula {
+        return new BFormula(this.formula);
+    }
+
+    opString(): string {
+        return "B";
     }
 }
 
@@ -355,6 +377,29 @@ export class ExactlyFormula implements Formula {
     }
 
 }
+
+export class YFormula extends ModalOperatorFormula {
+    isBoolean() {
+        return false;
+    }
+
+    constructor(f: Formula) {
+        super(undefined, f);
+    }
+
+    readonly type = "Y";
+    clone(): ModalOperatorFormula {
+        return new YFormula(this.formula);
+    }
+
+    opString(): string {
+        return "Y";
+    }
+}
+
+
+
+
 /* export enum FormulaType {
     Atomic, Or, And, K, Kpos, Kw, Not, Xor, Imply, Equiv, True, False
 } */

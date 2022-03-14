@@ -27,6 +27,33 @@ export class JasonAgentPublicAnnouncement implements EventModel<AgentExplicitEpi
         return Promise.resolve(true);
     }
 
+
+    /**
+     * Apply the event to model M, and place the result in R
+     * @param M
+     * @param R The output (resultant) model
+     */
+    applyResult(M: AgentExplicitEpistemicModel, R: AgentExplicitEpistemicModel): AgentExplicitEpistemicModel {
+
+
+        // Add all worlds from the initial model where the knowledge valuation 'propEval' is true
+        for (let w of M.getWorldNames()) {
+            if (M.modelCheck(w, this.propEval)) {
+                let newName = w + '_e';
+
+                R.addWorld(newName, <World> M.getWorld(w));
+            }
+        }
+
+        // Knowledge valuation has contradictions if there are no worlds (i.e. no pointed world was chosen).
+        if (R.getNumberWorlds() === 0) {
+            console.warn('No resulting worlds. Knowledge valuation has contradictions.');
+            return;
+        }
+
+        return R;
+    }
+
     /**
      * Applies the set propositions to the initial model. Does not update the current model.
      * @param M (unused) the current model.
@@ -34,23 +61,7 @@ export class JasonAgentPublicAnnouncement implements EventModel<AgentExplicitEpi
     apply(M: AgentExplicitEpistemicModel): AgentExplicitEpistemicModel {
 
         let resultModel = new AgentExplicitEpistemicModel();
-
-        // Add all worlds from the initial model where the knowledge valuation 'propEval' is true
-        for (let w of M.getWorldNames()) {
-            if (M.modelCheck(w, this.propEval)) {
-                let newName = w + '_e';
-
-                resultModel.addWorld(newName, <World> M.getWorld(w));
-            }
-        }
-
-        // Knowledge valuation has contradictions if there are no worlds (i.e. no pointed world was chosen).
-        if (resultModel.getNumberWorlds() === 0) {
-            console.warn('No resulting worlds. Knowledge valuation has contradictions.');
-            return;
-        }
-
-        return resultModel;
+        return this.applyResult(M, resultModel);
     }
 
 }

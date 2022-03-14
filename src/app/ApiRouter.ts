@@ -1,7 +1,7 @@
 import * as express from 'express';
 import {CustomDescription} from './models/CustomDescription';
 import {CustomEnvironment} from './models/CustomEnvironment';
-import {AtomicFormula, Formula, FormulaFactory, KFormula, KposFormula, NotFormula} from './modules/core/models/formula/formula';
+import {AtomicFormula, Formula, FormulaFactory, KFormula, KposFormula, NotFormula, YFormula} from './modules/core/models/formula/formula';
 import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
 import fs from 'fs';
 import {JasonAgentEnvironment} from './models/JasonAgentEnvironment';
@@ -9,6 +9,9 @@ import {JasonAgentDescription} from './models/JasonAgentDescription';
 import {AgentExplicitEpistemicModel} from './modules/core/models/epistemicmodel/agent-explicit-epistemic-model';
 import {ExplicitEventModel} from './modules/core/models/eventmodel/explicit-event-model';
 import {WorldValuation} from './modules/core/models/epistemicmodel/world-valuation';
+import {ExplicitTemporalEpistemicModel} from './modules/core/models/epistemicmodel/explicit-temporal-epistemic-model';
+import {Valuation} from './modules/core/models/epistemicmodel/valuation';
+import {ExplicitTemporalEventModel} from './modules/core/models/eventmodel/explicit-temporal-event-model';
 
 function createAcesAndEightsModel(): object {
     return {
@@ -174,9 +177,45 @@ function createAcesAndEightsModel(): object {
 let debugval = true;
 
 export class ApiRouter {
+    //
+    // testYesterday() {
+    //     console.log('Testing yesterday models');
+    //     let te = new ExplicitTemporalEpistemicModel();
+    //     te.addWorld('w1', new WorldValuation(new Valuation({})));
+    //
+    //     te.addWorld('w2', new WorldValuation(new Valuation({
+    //         'a': true
+    //     })));
+    //
+    //     te.addWorld('w3', new WorldValuation(new Valuation({
+    //         'b': true
+    //     })));
+    //
+    //     te.addWorld('w4', new WorldValuation(new Valuation({
+    //         'a': true,
+    //         'b': true
+    //     })));
+    //
+    //     console.log('Checking [Y]a:' + te.checkSync(new YFormula(new AtomicFormula('a'))));
+    //     console.log('Checking [Y]b:' + te.checkSync(new YFormula(new AtomicFormula('b'))));
+    //     console.log('Checking ~[Y]a:' + te.checkSync(new NotFormula(new YFormula(new AtomicFormula('a')))));
+    //
+    //     let event = ExplicitTemporalEventModel.getTemporalPublicAnnouncement(new AtomicFormula("a"))
+    //     console.log("Applying event: [a!]");
+    //
+    //     let res = event.apply(te);
+    //     console.log('Checking [Y]a:' + res.checkSync(new YFormula(new KposFormula(new AtomicFormula('a')))));
+    //     console.log('Checking [Y]b:' + res.checkSync(new YFormula(new AtomicFormula('b'))));
+    //     console.log('Checking ~[Y]a:' + res.checkSync(new NotFormula(new YFormula(new AtomicFormula('a')))));
+    //
+    //
+    //
+    //
+    // }
 
 
     createApp(app: express.Application): any {
+
 
         let curEnvironment: JasonAgentEnvironment;
 
@@ -327,10 +366,11 @@ export class ApiRouter {
                     for (let p of w) {
 
 
-                        let view = p.substr(0, p.indexOf("["));
+                        let view = p.substr(0, p.indexOf('['));
 
-                        if (view === 'closest')
-                            view = p.substr(0, p.indexOf("[") + 3);
+                        if (view === 'closest') {
+                            view = p.substr(0, p.indexOf('[') + 3);
+                        }
 
                         if (prev === undefined) {
                             prev = view;
