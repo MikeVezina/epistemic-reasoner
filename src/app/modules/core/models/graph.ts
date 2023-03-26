@@ -212,7 +212,7 @@ export class Graph {
 
         for (let source of nodeNames) {
             if (progressEdges % 1000 === 0) {
-                console.log('Created edges: ' + progressEdges + '/' + total + '(' + (progressEdges / total * 100).toFixed(2) + '%)');
+                // console.log('Created edges: ' + progressEdges + '/' + total + '(' + (progressEdges / total * 100).toFixed(2) + '%)');
             }
 
             progressEdges += nodeNames.length;
@@ -226,7 +226,7 @@ export class Graph {
             }
         }
         if (total % 1000 !== 0) {
-            console.log('Created edges: ' + total + '/' + total);
+            // console.log('Created edges: ' + total + '/' + total);
         }
     }
 

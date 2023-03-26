@@ -7,6 +7,7 @@ import {Valuation} from './valuation';
 import {CustomWorld} from '../../../../models/CustomWorld';
 import {JasonAgentDescription} from '../../../../models/JasonAgentDescription';
 import {AndFormula, AtomicFormula, Formula, NotFormula, TrueFormula} from './../formula/formula';
+import {WorldValuation} from './world-valuation';
 
 /**
  * A class that optimizes on an single Jason agent's epistemic model.
@@ -247,6 +248,8 @@ export class AgentExplicitEpistemicModel implements EpistemicModel {
         this.worldNamesArray = new Array<string>();
 
         for (let node of Object.keys(nodes)) {
+            //inject id into the node
+            nodes.get(node).valuation.propositions['id-' + node] = true;
             let world = new CustomWorld(new Valuation(nodes.get(node).valuation.propositions));
             this.addWorld(node, world);
         }
@@ -279,4 +282,16 @@ export class AgentExplicitEpistemicModel implements EpistemicModel {
         return this.modelCheck(this.getPointedWorldID(), propEval);
     }
 
+    getAtomicPropositions(): Set<string> {
+        let props: Set<string> = new Set<string>();
+
+        for (let w of this.worldArray) {
+            let worldVal = <WorldValuation> w;
+            for (let p of Object.keys(worldVal.valuation.propositions)) {
+                props.add(p);
+            }
+        }
+
+        return props;
+    }
 }

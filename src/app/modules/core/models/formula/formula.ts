@@ -280,7 +280,7 @@ export class ImplyFormula implements Formula {
         return new ImplyFormula(this._formula1.renameAtoms(f),this._formula2.renameAtoms(f));
     }
     prettyPrint(): string {
-        return "("+this._formula1.prettyPrint() +" -> "+this._formula2.prettyPrint()+")"
+        return "("+this._formula1.prettyPrint() +" => "+this._formula2.prettyPrint()+")"
     }
     private _formula1: Formula;
     private _formula2: Formula;
@@ -307,7 +307,7 @@ export class EquivFormula implements Formula {
         return new EquivFormula(this._formula1.renameAtoms(f),this._formula2.renameAtoms(f));
     }
     prettyPrint(): string {
-        return "("+this._formula1.prettyPrint() +" <-> "+this._formula2.prettyPrint()+")"
+        return "("+this._formula1.prettyPrint() +" <=> "+this._formula2.prettyPrint()+")"
     }
     private _formula1: Formula;
     private _formula2: Formula;

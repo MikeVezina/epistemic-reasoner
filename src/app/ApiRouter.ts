@@ -1,7 +1,16 @@
 import * as express from 'express';
 import {CustomDescription} from './models/CustomDescription';
-import {CustomEnvironment} from './models/CustomEnvironment';
-import {AtomicFormula, Formula, FormulaFactory, KFormula, KposFormula, NotFormula, YFormula} from './modules/core/models/formula/formula';
+import {constraintsToFormula, parseFormulaFromConstraint, parsePostFromRequest} from './modules/core/models/formula/APIFormula';
+import {
+    AndFormula,
+    AtomicFormula,
+    Formula,
+    FormulaFactory,
+    KFormula,
+    KposFormula,
+    NotFormula, OrFormula,
+    YFormula
+} from './modules/core/models/formula/formula';
 import {ExplicitEpistemicModel} from './modules/core/models/epistemicmodel/explicit-epistemic-model';
 import fs from 'fs';
 import {JasonAgentEnvironment} from './models/JasonAgentEnvironment';
@@ -12,6 +21,14 @@ import {WorldValuation} from './modules/core/models/epistemicmodel/world-valuati
 import {ExplicitTemporalEpistemicModel} from './modules/core/models/epistemicmodel/explicit-temporal-epistemic-model';
 import {Valuation} from './modules/core/models/epistemicmodel/valuation';
 import {ExplicitTemporalEventModel} from './modules/core/models/eventmodel/explicit-temporal-event-model';
+import {TouistService} from './modules/core/services/touist.service';
+import useFakeTimers = jest.useFakeTimers;
+import {ExplicitFilterEventModel} from './modules/core/models/eventmodel/explicit-filter-event-model';
+import {JasonAgentEventModel} from './modules/core/models/eventmodel/jason-agent-event-model';
+import {AgentEventModel} from './modules/core/models/eventmodel/agent-event-model';
+
+import Readlines from 'n-readlines';
+import * as process from 'process';
 
 function createAcesAndEightsModel(): object {
     return {
@@ -176,53 +193,109 @@ function createAcesAndEightsModel(): object {
 
 let debugval = true;
 
+function constraintsToModels(filter) {
+    // Create Touist files from constraints
+    let constraintFolder = '..\\cache\\constraints';
+    const TEMP_PATH = '..\\cache\\touist_src\\model_temp.touist';
+    if (fs.existsSync(constraintFolder)) {
+        for (let val of fs.readdirSync(constraintFolder)) {
+            if (filter !== undefined && !filter(val)) {
+                continue;
+            }
+
+            console.log('Processing:' + val);
+
+            const lines = new Readlines(constraintFolder + '\\' + val);
+
+            let constraints = [];
+
+            let line;
+            let lineNumber = 1;
+
+            let origToNew = {};
+            let newToOrig = {};
+
+            let next = 0;
+
+            fs.writeFileSync(TEMP_PATH, '');
+            while (line = lines.next()) {
+                // console.log(`Line ${lineNumber} has: ${line.toString('ascii')}`);
+                lineNumber++;
+
+                if (lineNumber % 1000 === 0) {
+                    console.log(lineNumber);
+                }
+
+                let formula = parseFormulaFromConstraint(JSON.parse(line));
+
+                let compact = formula.renameAtoms(p => {
+                    if (origToNew[p] != undefined) {
+                        return origToNew[p];
+                    }
+
+                    return p;
+
+                    let nextStr = 'p' + next;
+                    origToNew[p] = nextStr;
+                    newToOrig[nextStr] = p;
+                    next++;
+                    return nextStr;
+                });
+
+                fs.writeFileSync(TEMP_PATH,
+                    compact.prettyPrint() + '\r\n',
+                    {
+                        encoding: 'ascii',
+                        flag: 'a+'
+                    });
+
+
+                // constraints.push(JSON.parse(line));
+            }
+
+            console.log(JSON.stringify(origToNew));
+
+            fs.writeFileSync('..\\cache\\props\\' + lineNumber + '_mapping.json', JSON.stringify(origToNew));
+
+            let newPath = '..\\cache\\touist_src\\model_' + lineNumber + '.touist';
+            fs.renameSync(TEMP_PATH, newPath);
+
+            // // Create constraint string, find all possible models
+            // let constraintForms = constraintsToFormula(constraints);
+            //
+            // for (let c of constraintForms) {
+            //     fs.writeFileSync('..\\cache\\touist_src\\model_' + constraints.length + '.touist', c.prettyPrint() + '\r\n', {
+            //         encoding: 'utf8',
+            //         flag: 'a+'
+            //     });
+            //
+            //     // cs += c.prettyPrint() + '\r\n';
+            // }
+
+            console.log('Wrote to file:' + newPath);
+        }
+    }
+}
+
 export class ApiRouter {
-    //
-    // testYesterday() {
-    //     console.log('Testing yesterday models');
-    //     let te = new ExplicitTemporalEpistemicModel();
-    //     te.addWorld('w1', new WorldValuation(new Valuation({})));
-    //
-    //     te.addWorld('w2', new WorldValuation(new Valuation({
-    //         'a': true
-    //     })));
-    //
-    //     te.addWorld('w3', new WorldValuation(new Valuation({
-    //         'b': true
-    //     })));
-    //
-    //     te.addWorld('w4', new WorldValuation(new Valuation({
-    //         'a': true,
-    //         'b': true
-    //     })));
-    //
-    //     console.log('Checking [Y]a:' + te.checkSync(new YFormula(new AtomicFormula('a'))));
-    //     console.log('Checking [Y]b:' + te.checkSync(new YFormula(new AtomicFormula('b'))));
-    //     console.log('Checking ~[Y]a:' + te.checkSync(new NotFormula(new YFormula(new AtomicFormula('a')))));
-    //
-    //     let event = ExplicitTemporalEventModel.getTemporalPublicAnnouncement(new AtomicFormula("a"))
-    //     console.log("Applying event: [a!]");
-    //
-    //     let res = event.apply(te);
-    //     console.log('Checking [Y]a:' + res.checkSync(new YFormula(new KposFormula(new AtomicFormula('a')))));
-    //     console.log('Checking [Y]b:' + res.checkSync(new YFormula(new AtomicFormula('b'))));
-    //     console.log('Checking ~[Y]a:' + res.checkSync(new NotFormula(new YFormula(new AtomicFormula('a')))));
-    //
-    //
-    //
-    //
-    // }
 
+    createApp(app: express.Application, useCache: boolean = false): any {
 
-    createApp(app: express.Application): any {
+        let currentModel: AgentExplicitEpistemicModel;
 
+        let createFake = true;
 
-        let curEnvironment: JasonAgentEnvironment;
+        if (createFake) {
+            currentModel = new AgentExplicitEpistemicModel();
+            currentModel.addWorld('1', new WorldValuation(new Valuation(['loc(1)', 'loc(2)'])));
+            currentModel.addWorld('2', new WorldValuation(new Valuation(['loc(2)'])));
+        }
+        // Used for converting constraints to touist models (evaluation => massive models)
+        // if(false)
+        // constraintsToModels((name) => name.indexOf('40470') >= 0);
+        // constraintsToModels((name) => name.indexOf('_DISABLE') >= 0);
+        constraintsToModels((name) => name.indexOf('_DISABLE') >= 0);
 
-        // Lets just initialize curEnvironment for now...
-        // let rawData = createAcesAndEightsModel();
-        // curEnvironment = new CustomEnvironment(new CustomDescription(rawData));
-        // curEnvironment.getEpistemicModel().setPointedWorld(ExplicitEpistemicModel.createUpdateFormula([]));
 
         const file = 'desc_cache.json';
         let descCache = {};
@@ -231,7 +304,6 @@ export class ApiRouter {
             fs.writeFileSync(file, '{}');
         }
 
-        // var test = fs.readFileSync(file, 'utf-8');
 
         let descCacheObj = JSON.parse('{}');
         for (let key of Object.keys(descCacheObj)) {
@@ -243,8 +315,10 @@ export class ApiRouter {
             console.log('Pointed: ' + val.getInitialEpistemicModel().getPointedWorldID());
 
         }
+        console.log('Hi');
 
         console.log(Object.keys(descCache).length + ' loaded into cache.');
+
 
         /**
          * POST /api/world
@@ -255,136 +329,21 @@ export class ApiRouter {
          * Input: CustomDescription
          * Output: None.
          */
-        app.post('/api/model', async function(req, res: express.Response) {
-
-            let data = req.body;
-            let props = req.body.props || [];
-            let dataString = JSON.stringify(req.body);
-
-            let numWorlds = req.body.initialModel.worlds.length;
-            console.log('Creating new model with ' + numWorlds + ' worlds');
-
-            // if(numWorlds == 0)
-            // {
-            //     console.warn("The model input does not contain any worlds. Deleting current model.");
-            //     return res.send("Empty model not supported").end();
-            // }
-
-            let start = Date.now();
-
-            let isCached = descCache[dataString] !== undefined;
-
-            // Create and Place in cache.
-            // let curDescription = descCache[dataString] || new CustomDescription(data);
-            try {
-                let curDescription = new JasonAgentDescription(data);
-
-                // Todo: Enable cache (large models result in RangeError: serialized string length too long)
-                //descCache[dataString] = curDescription;
-
-                // Create Description end time
-                let descEnd = Date.now();
-
-                curEnvironment = new JasonAgentEnvironment(curDescription);
-                let envEnd = Date.now();
-
-                console.log('');
-                console.log('Model Metrics:');
-                console.log('------- -------');
-                console.log('Cached: ' + isCached);
-                console.log('Create Description (Initial Model) Time: ' + (descEnd - start));
-                console.log('Create Env. Time: ' + (envEnd - descEnd));
-                console.log('Total Time: ' + (envEnd - start));
-                console.log('------- -------');
-                console.log('Worlds: ' + curEnvironment.getEpistemicModel().getNumberWorlds());
-                console.log('Atomic Propositions: ' + curEnvironment.getExampleDescription().getAtomicPropositions().length);
-                console.log('Edges/Simulated: ' + curEnvironment.getEpistemicModel().getNumberEdges() + ' / ' + curEnvironment.getEpistemicModel().getNumberFalseEdges());
-                console.log('Pointed: ' + curEnvironment.getEpistemicModel().getPointedWorldID());
-                console.log('======= =======');
-
-                // Write to cache
-                if (!isCached) {
-                    fs.writeFileSync(file, JSON.stringify(descCache));
-                }
-            } catch (err) {
-                console.warn('An error occurred while parsing the input model. Error: ' + err);
-            }
-
-            res.end();
-        });
+        app.post('/api/model', createModelRequest);
 
 
         app.get('/api/model', async function(req, res) {
-            if (!curEnvironment) {
-                return res.send({error: 'No Environment.'});
+            if (!currentModel) {
+                return res.send({success: false, error: 'No Environment.'});
             }
 
             let resultObject: any = {};
 
             if (req.query && req.query.description) {
-                resultObject.description = curEnvironment.getExampleDescription();
+                // resultObject.description = curEnvironment.getExampleDescription();
             }
 
-            resultObject.model = curEnvironment.getEpistemicModel();
-
-            if (debugval) {
-                let sortedWorlds = [];
-
-                for (let world of curEnvironment.getEpistemicModel().worldArray) {
-                    let val = (<WorldValuation> world).valuation;
-                    let props = val.propositions;
-
-
-                    let sortedProps = [];
-                    for (let p of Object.keys(props)) {
-                        if (props[p] === true) {
-                            sortedProps.push(p);
-                        }
-                    }
-
-                    sortedProps.sort();
-                    sortedProps.sort((a, b) => {
-                        if (a.indexOf('location') == 0) {
-                            return -1;
-                        }
-                        if (b.indexOf('location') == 0) {
-                            return 1;
-                        }
-
-                        return 0;
-                    });
-                    sortedWorlds.push(sortedProps);
-                }
-                sortedWorlds.sort((l1: string[], l2: string[]) => {
-                    return l1[0].localeCompare(l2[0]);
-                });
-
-                for (let w of sortedWorlds) {
-                    console.log('W: ' + w[0]);
-                    let prev = undefined;
-
-                    for (let p of w) {
-
-
-                        let view = p.substr(0, p.indexOf('['));
-
-                        if (view === 'closest') {
-                            view = p.substr(0, p.indexOf('[') + 3);
-                        }
-
-                        if (prev === undefined) {
-                            prev = view;
-                        } else if (prev !== view) {
-                            console.log('--');
-                            prev = view;
-                        }
-
-                        console.log(p);
-                    }
-                    console.log();
-                }
-            }
-
+            resultObject.model = currentModel;
 
             res.send(resultObject);
             res.end();
@@ -396,13 +355,55 @@ export class ApiRouter {
          * Input: { formula: String }
          * Output: { result: boolean }
          */
+        app.post('/api/single-evaluate', async function(req, res) {
+            if (!currentModel) {
+                return res.send({result: false, error: 'No Environment.'});
+            }
+
+
+            let formula = req.body.formula || '';
+            // let currentModel = curEnvironment.getEpistemicModel();
+
+            if (formula === undefined) {
+                return res.send({
+                    result: false
+                });
+            }
+
+
+            let start = Date.now();
+
+            let parsedForm = parseFormulaFromConstraint(formula);
+            console.log(parsedForm);
+
+            // let parsedFormula = parseFormulaObject(formula);
+
+            let evalStart = Date.now();
+            let result = currentModel.checkSync(parsedForm);
+            let delta = Date.now() - evalStart;
+
+            console.log('Single formula took ' + (Date.now() - start) + '(total), or eval time: ' + delta);
+
+            return res.send({
+                result: result
+            });
+
+        });
+
+
+        /**
+         * Evaluate a formula in the current state of the model.
+         *
+         * Input: { formula: String }
+         * Output: { result: boolean }
+         */
         app.post('/api/evaluate', async function(req, res) {
-            if (!curEnvironment) {
+            if (!currentModel) {
                 return res.send({error: 'No Environment.'});
             }
 
             let formulas = req.body.formulas || '';
-            let currentModel = curEnvironment.getEpistemicModel();
+            // let currentModel = curEnvironment.getEpistemicModel();
 
             let formulaResults = evaluateFormulas(formulas, currentModel);
 
@@ -412,29 +413,278 @@ export class ApiRouter {
 
         });
 
+        async function createModelRequest(req, res: express.Response) {
+            let data = req.body;
+            if (!data || (!data.constraints && !data.locations_model)) {
 
-        /**
-         * Update the current world valuation.
-         *
-         * Input: { [id: string]: boolean } | string[]
-         * Output: { success: boolean }
-         */
-        app.put('/api/props', async function(req, res) {
-            if (!curEnvironment) {
-                console.log('No environment setup');
+                console.log('No constraints given.');
+                return res.send({success: false});
+            }
+
+            // Custom location map
+            if (data.locations_model) {
+                let start = Date.now();
+
+                if (currentModel != undefined) {
+                    console.log('Overwriting previous model');
+                }
+
+                console.log('Creating new model with ' + data.locations_model + ' worlds');
+
+                try {
+                    if (currentModel != undefined) {
+                        console.log('Overriding existing epistemic model with ' + currentModel.getNumberWorlds());
+                    }
+
+                    currentModel = new AgentExplicitEpistemicModel();
+                    let worldId = 0;
+                    for (let x = 0; x < data.locations_model; x++) {
+                        for (let y = 0; y < data.locations_model; y++) {
+
+                            if ((x === 1 && y === 2) || (x === 2 && y === 2)) {
+                                continue;
+                            }
+
+
+                            let world = new WorldValuation(new Valuation(['loc(' + x + ',' + y + ')']));
+                            currentModel.addWorld(String(worldId), world);
+                            worldId++;
+                        }
+                    }
+
+                    // Create model parse end time
+                    let modelParseEnd = Date.now();
+
+                    console.log('');
+                    console.log('Model Metrics:');
+                    console.log('------- -------');
+                    // console.log('Cached: ' + isCached);
+                    // console.log('Generation Time (ms): ' + (genEnd - start));
+                    // console.log('Model Creation Time (ms): ' + (modelParseEnd - genEnd));
+                    console.log('Total Time (ms): ' + (modelParseEnd - start));
+                    console.log('------- -------');
+                    console.log('Constraints: ' + data.locations_model);
+                    console.log('Worlds: ' + currentModel.getNumberWorlds());
+                    console.log('Atomic Propositions: ' + currentModel.getAtomicPropositions().size);
+                    console.log('Edges/Simulated: ' + currentModel.getNumberEdges() + ' / ' + currentModel.getNumberFalseEdges());
+                    console.log('Pointed: ' + currentModel.getPointedWorldID());
+                    console.log('======= =======');
+
+                    return res.send({success: true, worlds: currentModel.worldNamesArray.length});
+                } catch (err) {
+                    console.warn('An error occurred while parsing the input model. Error: ' + err);
+                }
+
+                return res.send({success: false});
+            }
+
+            let modelPath = '..\\cache\\model_' + data.constraints.length + '.out';
+            if (useCache && fs.existsSync(modelPath)) {
+                // const broadbandLines = new Readlines(modelPath);
+
+                // let constraints = [];
+                //
+                // let line;
+                // let lineNumber = 1;
+                //
+                // while (line = broadbandLines.next()) {
+                //     // console.log(`Line ${lineNumber} has: ${line.toString('ascii')}`);
+                //     lineNumber++;
+                //     constraints.push(JSON.parse(line));
+                // }
+
+                return res.send(await createModelFromConstraints(data.constraints, modelPath));
+            }
+
+
+            return res.send(await createModelFromConstraints(data.constraints));
+        }
+
+
+        async function createModelFromConstraints(constraints, cachedModel: string = undefined) {
+            if (!constraints || constraints.length === 0) {
+                console.log('No constraints given.');
+                return {success: false};
+            }
+
+            console.log('Creating model using ' + constraints.length + ' constraint formulas');
+
+            let start = Date.now();
+
+            // Create constraint string, find all possible models
+            let constraintForms = constraintsToFormula(constraints);
+
+            let cs = '';
+            for (let c of constraintForms) {
+                cs += c.prettyPrint() + '\r\n';
+            }
+
+            let fetchRes = [];
+            if (cachedModel !== undefined && fs.existsSync(cachedModel)) {
+                console.log('Loading cached constraint model: ' + cachedModel);
+                fetchRes = await TouistService.parse(fs.readFileSync(cachedModel, {encoding: 'utf8'}));
+            } else {
+
+                let constraintForm = new AndFormula(constraintForms);
+
+                console.log(cs);
+                let origToNew = {};
+                let newToOrig = {};
+
+                let next = 0;
+                let compressedForm = constraintForm.renameAtoms(p => {
+                    if (origToNew[p] != undefined) {
+                        return origToNew[p];
+                    }
+
+                    let nextStr = 'p' + next;
+                    origToNew[p] = nextStr;
+                    newToOrig[nextStr] = p;
+                    next++;
+                    return nextStr;
+                });
+
+
+                fetchRes = await TouistService.fetchModels(compressedForm.prettyPrint());
+            }
+            // Mark generation end time
+            let genEnd = Date.now();
+
+            // No results/models generated
+            if (!fetchRes || fetchRes.length === 0) {
+                console.log('No models were generated. Maybe invalid constraints?');
+                return {success: false};
+            }
+
+            console.log('Creating new model with ' + fetchRes.length + ' worlds');
+            // console.log(JSON.stringify(fetchRes));
+
+            try {
+                if (currentModel != undefined) {
+                    console.log('Overriding existing epistemic model with ' + currentModel.getNumberWorlds());
+                }
+
+                // Create epistemic model from valuations
+                currentModel = parseModelFromValuations(fetchRes);
+
+                // Create model parse end time
+                let modelParseEnd = Date.now();
+
+                console.log('');
+                console.log('Model Metrics:');
+                console.log('------- -------');
+                // console.log('Cached: ' + isCached);
+                console.log('Generation Time (ms): ' + (genEnd - start));
+                console.log('Model Creation Time (ms): ' + (modelParseEnd - genEnd));
+                console.log('Total Time (ms): ' + (modelParseEnd - start));
+                console.log('------- -------');
+                console.log('Constraints: ' + constraints.length);
+                console.log('Worlds: ' + currentModel.getNumberWorlds());
+                console.log('Atomic Propositions: ' + currentModel.getAtomicPropositions().size);
+                console.log('Edges/Simulated: ' + currentModel.getNumberEdges() + ' / ' + currentModel.getNumberFalseEdges());
+                console.log('Pointed: ' + currentModel.getPointedWorldID());
+                console.log('======= =======');
+
+                return {success: true, worlds: currentModel.worldNamesArray.length};
+
+            } catch (err) {
+                console.warn('An error occurred while parsing the input model. Error: ' + err);
+            }
+
+            return {success: false};
+        }
+
+
+        function eventModelFromRequest(events): AgentEventModel {
+            let evModel = new AgentEventModel();
+
+            for (let e of events) {
+                let {id, pre, post} = e;
+
+                evModel.addAction(id, parseFormulaFromConstraint(pre), parsePostFromRequest(post));
+            }
+
+            return evModel;
+        }
+
+        app.post('/api/apply-event', async function(req, res) {
+            if (!currentModel) {
+                console.log('No current model');
                 return res.end();
             }
 
 
-            try {
-                let knowledgeValuation: { [id: string]: boolean } = req.body.props || [];
-                // console.log("Received Knowledge Update: " + JSON.stringify(knowledgeValuation));
+            console.log('apply-event called');
 
-                let {success, result} = await curEnvironment.updateModel(knowledgeValuation);
-                res.send({success});
+            try {
+                let events = req.body.events || [];
+
+                if (events === []) {
+                    console.log('No events to apply.');
+                    return res.send({success: false});
+                }
+
+                let prevWorlds = currentModel.getNumberWorlds();
+
+                let eventIds = [];
+
+                for (let ev of events) {
+                    eventIds.push(ev.id);
+                }
+
+                let start = Date.now();
+
+                if (eventIds.length > 5) {
+                    console.log('Received event model with ' + eventIds.length + ' events: ' + JSON.stringify(eventIds));
+                } else {
+                    console.log('Received event model with ' + eventIds.length + ' events');
+                }
+                let eventModel = eventModelFromRequest(events);
+                let createEvModEnd = Date.now();
+
+                let result = eventModel.apply(currentModel);
+                let applyEvModEnd = Date.now();
+
+
+                if (result === undefined) {
+                    console.log('Failed to apply event');
+                    return res.send({success: false});
+                }
+
+                currentModel = result;
+
+                console.log('');
+                console.log('Event Metrics:');
+                console.log('------- -------');
+                console.log('Event Creation (ms): ' + (createEvModEnd - start));
+                console.log('Event Application (ms): ' + (applyEvModEnd - createEvModEnd));
+                console.log('Total Time (ms): ' + (applyEvModEnd - start));
+                console.log('------- -------');
+                console.log('Events: ' + eventIds.length);
+                console.log('Previous Worlds: ' + prevWorlds);
+                console.log('Resulting Worlds: ' + currentModel.getNumberWorlds());
+                console.log('Edges/Simulated: ' + currentModel.getNumberEdges() + ' / ' + currentModel.getNumberFalseEdges());
+                console.log('======= =======');
+                console.log('');
+
+                let numOnEvents = 0;
+
+                for (const eventId of eventIds) {
+                    if (eventId.indexOf('on(') >= 0) {
+                        console.log('On event: ' + eventId);
+                        numOnEvents++;
+                    }
+                }
+
+                if (numOnEvents > 0) {
+                    console.log('Total Time (ms): ' + (applyEvModEnd - start));
+                    console.log('Memory check -- Breakpoint here? ' + (process.memoryUsage().heapUsed / 1000 / 1000));
+                    // console.log('Memory check -- Breakpoint here? ' + process.memoryUsage());
+                }
+                return res.send({success: true});
 
             } catch (err) {
-                console.error('There was an error updating propositions: ' + err);
+                console.error('There was an error updating the model: ' + err);
             }
 
 
@@ -476,6 +726,7 @@ export class ApiRouter {
             return formulaResults;
         }
 
+
         function parseFormulaObject(formula: any) {
             if (!formula) {
                 return;
@@ -503,6 +754,18 @@ export class ApiRouter {
             return modalityNegated ? new NotFormula(modalityFormula) : modalityFormula;
         }
 
+        function parseModelFromValuations(fetchRes) {
+            let model = new AgentExplicitEpistemicModel();
+            let worldId = 0;
+
+            for (let resArr of fetchRes) {
+                let world = new WorldValuation(new Valuation(resArr));
+                model.addWorld(String(worldId), world);
+                worldId++;
+            }
+
+            return model;
+        }
 
     }
 

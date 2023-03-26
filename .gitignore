@@ -5,3 +5,4 @@ package-lock.json
 /out-tsc/
 .idea/
 /desc_cache.json
+/cache/

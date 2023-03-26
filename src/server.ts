@@ -19,21 +19,32 @@ import {TrivialPostcondition} from './app/modules/core/models/eventmodel/trivial
 
 //Install express server
 const express = require('express');
+const bodyParser = require('body-parser');
+
 const app = express();
 
-app.use(express.json({
-    limit: '500mb'
-}));
+
+app.use((req, res, next) => {
+    console.log('Received request ' + req.url + ", with size: " + req.headers['content-length']);
+    next();
+});
+// Express 4.0
+app.use(bodyParser.json({limit: '500mb'}));
+app.use(bodyParser.urlencoded({limit: '500mb', extended: true}));
+
+
+
 app.use(cors());
 
 
 // testDoxastic();
 
-testBeliefUpdate();
-testTransitionMultiple();
+// testBeliefUpdate();
+// testTransitionMultiple();
 
 let a = new ApiRouter();
-a.createApp(app);
+a.createApp(app, true);
+// a.createApp(app);
 
 // Start the app on the provided port
 let port = process.env.PORT || 9090;
