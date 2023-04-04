@@ -527,6 +527,9 @@ export class ApiRouter {
 
                 let constraintForm = new AndFormula(constraintForms);
 
+
+
+                // Compress formula by substituting with simple proposition names
                 console.log(cs);
                 let origToNew = {};
                 let newToOrig = {};
